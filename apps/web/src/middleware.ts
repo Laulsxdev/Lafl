@@ -1,7 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/login", "/api/webhooks"];
+// /pod = token-authed driver POD upload (no account); /api/cron = CRON_SECRET-authed.
+const PUBLIC_PREFIXES = ["/login", "/api/webhooks", "/api/cron", "/pod"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
