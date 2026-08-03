@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CHARGE_TYPES, formatInr, formatWeightMt } from "@lafl/core";
 import { parseEwayResponse } from "@lafl/marketpe";
+import ActionForm from "@/components/action-form";
 import { requireOrgStaff } from "@/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -317,32 +318,32 @@ export default async function TripDetailPage({
       {!isDraft && (next || ["draft", "planned", "ready", "in_transit", "at_destination", "unloaded"].includes(trip.status)) && (
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-xs">
           {next && (
-            <form action={transitionAction} className="flex items-center gap-2">
+            <ActionForm action={transitionAction} className="flex items-center gap-2">
               <input type="hidden" name="tripId" value={tripId} />
               <input type="hidden" name="to" value={next.to} />
               <button type="submit" className={btnPrimary}>{next.label}</button>
               {next.note && <span className="text-xs text-neutral-400">{next.note}</span>}
-            </form>
+            </ActionForm>
           )}
           {["planned", "ready"].includes(trip.status) && (
-            <form action={transitionAction} className="ml-auto flex items-center gap-2">
+            <ActionForm action={transitionAction} className="ml-auto flex items-center gap-2">
               <input type="hidden" name="tripId" value={tripId} />
               <input type="hidden" name="to" value="cancelled" />
               <input name="reason" placeholder="Cancel reason" required className={inputSmCls} />
               <button type="submit" className={btnDanger}>
                 Cancel Trip
               </button>
-            </form>
+            </ActionForm>
           )}
           {["in_transit", "at_destination", "unloaded"].includes(trip.status) && (
-            <form action={transitionAction} className="ml-auto flex items-center gap-2">
+            <ActionForm action={transitionAction} className="ml-auto flex items-center gap-2">
               <input type="hidden" name="tripId" value={tripId} />
               <input type="hidden" name="to" value="aborted" />
               <input name="reason" placeholder="Abort reason" required className={inputSmCls} />
               <button type="submit" className={btnDanger}>
                 Abort
               </button>
-            </form>
+            </ActionForm>
           )}
         </div>
       )}
@@ -368,11 +369,11 @@ export default async function TripDetailPage({
                 </div>
               </div>
               {isDraft && (
-                <form action={detachEwbAction}>
+                <ActionForm action={detachEwbAction}>
                   <input type="hidden" name="tripId" value={tripId} />
                   <input type="hidden" name="ewbId" value={l.ewb_id} />
                   <button type="submit" className="text-sm font-medium text-red-600 hover:underline">Remove</button>
-                </form>
+                </ActionForm>
               )}
             </div>
           ))}
@@ -383,15 +384,15 @@ export default async function TripDetailPage({
 
         {isDraft && (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <form action={attachEwbFetch} className="rounded-lg border border-neutral-200 p-4">
+            <ActionForm action={attachEwbFetch} resetOnOk className="rounded-lg border border-neutral-200 p-4">
               <div className="text-sm font-medium text-neutral-900">Fetch from MarketPe</div>
               <input type="hidden" name="tripId" value={tripId} />
               <div className="mt-2 flex gap-2">
                 <input name="ewbNo" placeholder="12-digit EWB number" pattern="\d{12}" required className={inputCls} />
                 <button type="submit" className={btnPrimary}>Fetch</button>
               </div>
-            </form>
-            <form action={attachEwbManualAction} className="rounded-lg border border-neutral-200 p-4">
+            </ActionForm>
+            <ActionForm action={attachEwbManualAction} resetOnOk className="rounded-lg border border-neutral-200 p-4">
               <div className="text-sm font-medium text-neutral-900">Manual entry (fallback)</div>
               <input type="hidden" name="tripId" value={tripId} />
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -405,7 +406,7 @@ export default async function TripDetailPage({
                 <input name="validUntil" type="datetime-local" className={inputCls} />
               </div>
               <button type="submit" className={`mt-3 ${btnGhost}`}>Add consignment</button>
-            </form>
+            </ActionForm>
           </div>
         )}
       </SectionCard>
@@ -414,7 +415,7 @@ export default async function TripDetailPage({
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <SectionCard title="Route & Schedule" meta={isDraft ? "Step 3a" : undefined}>
           {isDraft ? (
-            <form action={savePlan} className="space-y-3">
+            <ActionForm action={savePlan} className="space-y-3">
               <input type="hidden" name="tripId" value={tripId} />
               <SelectSearch
                 name="routeId"
@@ -445,7 +446,7 @@ export default async function TripDetailPage({
               </div>
               <input name="notes" placeholder="Notes / helper name / instructions" defaultValue={trip.notes ?? ""} className={inputCls} />
               <button type="submit" className={btnGhost}>Save plan</button>
-            </form>
+            </ActionForm>
           ) : (
             <dl className="space-y-1.5 text-sm">
               <div className="flex justify-between"><dt className="text-neutral-500">Planned start</dt><dd className="font-medium text-neutral-900">{fmt(trip.planned_start)}</dd></div>
@@ -469,7 +470,7 @@ export default async function TripDetailPage({
             {activeCrew.length === 0 && <p className="text-neutral-400">No driver assigned yet.</p>}
           </div>
           {isDraft && (
-            <form action={saveCrew} className="mt-3 space-y-2">
+            <ActionForm action={saveCrew} className="mt-3 space-y-2">
               <input type="hidden" name="tripId" value={tripId} />
               <SelectSearch
                 name="primaryDriverId"
@@ -502,7 +503,7 @@ export default async function TripDetailPage({
                   </span>
                 )}
               </div>
-            </form>
+            </ActionForm>
           )}
         </SectionCard>
       </div>
@@ -522,12 +523,12 @@ export default async function TripDetailPage({
         }
       >
         {(charges ?? []).length === 0 ? (
-          <form action={loadCharges}>
+          <ActionForm action={loadCharges}>
             <input type="hidden" name="tripId" value={tripId} />
             <button type="submit" className={btnPrimary}>
               Load charges (master rate / standard heads)
             </button>
-          </form>
+          </ActionForm>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -546,12 +547,12 @@ export default async function TripDetailPage({
                   <td className="py-2.5 tabular-nums">₹{c.planned_amount.toLocaleString("en-IN")}</td>
                   <td className="py-2.5">
                     {isDraft ? (
-                      <form action={saveChargeAction} className="flex items-center gap-2">
+                      <ActionForm action={saveChargeAction} className="flex items-center gap-2">
                         <input type="hidden" name="tripId" value={tripId} />
                         <input type="hidden" name="chargeId" value={c.id} />
                         <input name="amount" type="number" step="0.01" defaultValue={c.approved_amount} className={`w-28 ${inputSmCls}`} />
                         <button type="submit" className="text-xs font-medium text-neutral-500 hover:text-neutral-900">save</button>
-                      </form>
+                      </ActionForm>
                     ) : (
                       <span className="tabular-nums">₹{c.approved_amount.toLocaleString("en-IN")}</span>
                     )}
@@ -559,11 +560,11 @@ export default async function TripDetailPage({
                   <td className="py-2.5 text-neutral-500">{c.source}</td>
                   {isDraft && (
                     <td className="py-2.5 text-right">
-                      <form action={deleteChargeAction}>
+                      <ActionForm action={deleteChargeAction}>
                         <input type="hidden" name="tripId" value={tripId} />
                         <input type="hidden" name="chargeId" value={c.id} />
                         <button type="submit" className="text-xs font-medium text-red-600 hover:underline">remove</button>
-                      </form>
+                      </ActionForm>
                     </td>
                   )}
                 </tr>
@@ -573,7 +574,7 @@ export default async function TripDetailPage({
         )}
 
         {isDraft && (charges ?? []).length > 0 && (
-          <form action={addChargeAction} className="mt-3 flex items-center gap-2">
+          <ActionForm action={addChargeAction} resetOnOk className="mt-3 flex items-center gap-2">
             <input type="hidden" name="tripId" value={tripId} />
             <select name="chargeType" className={inputSmCls}>
               {CHARGE_TYPES.map((t) => (
@@ -582,7 +583,7 @@ export default async function TripDetailPage({
             </select>
             <input name="amount" type="number" step="0.01" placeholder="Amount" required className={`w-32 ${inputSmCls}`} />
             <button type="submit" className={btnGhost}>+ Add charge</button>
-          </form>
+          </ActionForm>
         )}
 
         {/* Advances */}
@@ -598,7 +599,7 @@ export default async function TripDetailPage({
           </div>
         )}
         {["draft", "ready", "in_transit"].includes(trip.status) && activeCrew.length > 0 && (
-          <form action={addAdvanceAction} className="mt-3 flex flex-wrap items-center gap-2">
+          <ActionForm action={addAdvanceAction} resetOnOk className="mt-3 flex flex-wrap items-center gap-2">
             <input type="hidden" name="tripId" value={tripId} />
             <select name="driverId" className={inputSmCls}>
               {activeCrew.map((c) => (
@@ -613,11 +614,11 @@ export default async function TripDetailPage({
             </select>
             <input name="refNo" placeholder="Ref no." className={`w-32 ${inputSmCls}`} />
             <button type="submit" className={btnGhost}>+ Advance</button>
-          </form>
+          </ActionForm>
         )}
 
         {isDraft && (
-          <form action={activateTrip} className="mt-6 border-t border-neutral-100 pt-4">
+          <ActionForm action={activateTrip} className="mt-6 border-t border-neutral-100 pt-4">
             <input type="hidden" name="tripId" value={tripId} />
             <button type="submit" className={`${btnSuccess} px-5 py-2.5`}>
               ✓ Approve Money & Activate Trip
@@ -625,7 +626,7 @@ export default async function TripDetailPage({
             <span className="ml-3 text-xs text-neutral-400">
               Needs: ≥1 E-Way Bill · driver · charges · start date & ETA
             </span>
-          </form>
+          </ActionForm>
         )}
       </SectionCard>
 
@@ -671,21 +672,21 @@ export default async function TripDetailPage({
                 </div>
                 {p.status === "uploaded" ? (
                   <div className="flex items-center gap-2">
-                    <form action={verifyPodAction}>
+                    <ActionForm action={verifyPodAction}>
                       <input type="hidden" name="tripId" value={tripId} />
                       <input type="hidden" name="podId" value={p.id} />
                       <button type="submit" className={`${btnSuccess} px-3 py-1.5 text-xs`}>
                         Verify
                       </button>
-                    </form>
-                    <form action={rejectPodAction} className="flex items-center gap-1.5">
+                    </ActionForm>
+                    <ActionForm action={rejectPodAction} resetOnOk className="flex items-center gap-1.5">
                       <input type="hidden" name="tripId" value={tripId} />
                       <input type="hidden" name="podId" value={p.id} />
                       <input name="reason" placeholder="Reject reason" required className={`${inputSmCls} px-2 py-1 text-xs`} />
                       <button type="submit" className={`${btnDanger} px-2.5 py-1 text-xs`}>
                         Reject
                       </button>
-                    </form>
+                    </ActionForm>
                   </div>
                 ) : (
                   <span className={`text-xs font-semibold uppercase ${p.status === "verified" ? "text-green-700" : "text-red-600"}`}>
@@ -700,7 +701,7 @@ export default async function TripDetailPage({
           </div>
           {["at_destination", "unloaded", "ops_closed", "completed"].includes(trip.status) &&
             trip.pod_status !== "verified" && (
-              <form action={uploadPodAction} className="mt-4 flex flex-wrap items-center gap-2">
+              <ActionForm action={uploadPodAction} resetOnOk className="mt-4 flex flex-wrap items-center gap-2">
                 <input type="hidden" name="tripId" value={tripId} />
                 <input name="file" type="file" required accept="image/jpeg,image/png,image/webp,application/pdf" className="text-sm" />
                 <select name="ewbId" className={inputSmCls}>
@@ -713,7 +714,7 @@ export default async function TripDetailPage({
                 </select>
                 <button type="submit" className={btnGhost}>Upload POD</button>
                 <span className="text-xs text-neutral-400">JPG / PNG / PDF, max 10 MB</span>
-              </form>
+              </ActionForm>
             )}
         </SectionCard>
       )}
@@ -726,12 +727,12 @@ export default async function TripDetailPage({
           meta={<span className="capitalize">status: {trip.settlement_status.replace(/_/g, " ")}</span>}
         >
           {(settlements ?? []).length === 0 ? (
-            <form action={generateSettlementsAction}>
+            <ActionForm action={generateSettlementsAction}>
               <input type="hidden" name="tripId" value={tripId} />
               <button type="submit" className={btnPrimary}>
                 Generate settlement (allowance + approved expenses − advances)
               </button>
-            </form>
+            </ActionForm>
           ) : (
             <div className="space-y-4">
               {(settlements ?? []).map((s) => (
@@ -771,7 +772,7 @@ export default async function TripDetailPage({
 
                   {s.status !== "paid" && (
                     <div className="mt-3 flex flex-wrap items-end gap-4">
-                      <form action={updateSettlementAction} className="flex flex-wrap items-end gap-2">
+                      <ActionForm action={updateSettlementAction} className="flex flex-wrap items-end gap-2">
                         <input type="hidden" name="tripId" value={tripId} />
                         <input type="hidden" name="settlementId" value={s.id} />
                         <label className="text-xs font-medium text-neutral-500">
@@ -788,8 +789,8 @@ export default async function TripDetailPage({
                         </label>
                         <input name="penaltyReason" placeholder="Penalty reason" defaultValue={s.penalty_reason ?? ""} className={`w-40 ${inputSmCls}`} />
                         <button type="submit" className={btnGhost}>Save</button>
-                      </form>
-                      <form action={markSettlementPaidAction} className="flex items-end gap-2">
+                      </ActionForm>
+                      <ActionForm action={markSettlementPaidAction} className="flex items-end gap-2">
                         <input type="hidden" name="tripId" value={tripId} />
                         <input type="hidden" name="settlementId" value={s.id} />
                         <select name="mode" className={inputSmCls}>
@@ -801,7 +802,7 @@ export default async function TripDetailPage({
                         <button type="submit" className={btnSuccess}>
                           Mark Paid
                         </button>
-                      </form>
+                      </ActionForm>
                     </div>
                   )}
                 </div>
@@ -849,18 +850,18 @@ export default async function TripDetailPage({
                 </div>
               </div>
               {invoice.status !== "received" && (
-                <form action={recordReceiptAction} className="mt-3 flex items-center gap-2">
+                <ActionForm action={recordReceiptAction} resetOnOk className="mt-3 flex items-center gap-2">
                   <input type="hidden" name="tripId" value={tripId} />
                   <input type="hidden" name="invoiceId" value={invoice.id} />
                   <input name="amount" type="number" step="0.01" placeholder="Amount received ₹" required className={`w-44 ${inputSmCls}`} />
                   <button type="submit" className={btnSuccess}>
                     Record receipt
                   </button>
-                </form>
+                </ActionForm>
               )}
             </div>
           ) : (
-            <form action={generateInvoiceAction} className="grid gap-3 md:grid-cols-2">
+            <ActionForm action={generateInvoiceAction} className="grid gap-3 md:grid-cols-2">
               <input type="hidden" name="tripId" value={tripId} />
               <div className="md:col-span-2">
                 <label className={labelCls}>Bill to (customer)</label>
@@ -919,7 +920,7 @@ export default async function TripDetailPage({
                   Generate invoice
                 </button>
               </div>
-            </form>
+            </ActionForm>
           )}
         </SectionCard>
       )}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatInr } from "@lafl/core";
+import ActionForm from "@/components/action-form";
 import { requireOrgStaff } from "@/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { recordReceiptAction } from "../trips/actions";
@@ -85,15 +86,14 @@ export default async function InvoicesPage({
                 <div className="font-semibold tabular-nums text-neutral-900">{formatInr(inv.total - inv.received_amount)}</div>
                 <div className="text-xs tabular-nums text-neutral-400">of {formatInr(inv.total)}</div>
               </div>
-              <form action={recordReceiptAction} className="flex items-center gap-1.5">
+              <ActionForm action={recordReceiptAction} resetOnOk className="flex items-center gap-1.5">
                 <input type="hidden" name="tripId" value={inv.trip_id} />
                 <input type="hidden" name="invoiceId" value={inv.id} />
-                <input type="hidden" name="back" value="/invoices" />
                 <input name="amount" type="number" step="0.01" placeholder="₹ received" required className={`w-28 ${inputSmCls}`} />
                 <button type="submit" className={`${btnSuccess} px-3 py-1.5 text-xs`}>
                   Receipt
                 </button>
-              </form>
+              </ActionForm>
             </div>
           </div>
         ))}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PayMode, TripStatus } from "@lafl/core";
+import type { ActionResult } from "@/lib/action-result";
 import { requireOrgStaff } from "@/server/auth";
 import * as trips from "@/server/services/trip.service";
 
@@ -17,34 +18,59 @@ function isRedirect(err: unknown): boolean {
   return !!err && typeof err === "object" && "digest" in err;
 }
 
-async function run(
-  tripId: string | null,
-  fn: () => Promise<void | string>,
-  okMsg: string,
-) {
+/**
+ * In-place action runner: no redirect, so the page never jumps or reloads.
+ * Success revalidates everything (small data set — simpler than tracking
+ * exactly which lists a mutation touches) and the result renders inline
+ * next to the form via <ActionForm>.
+ */
+async function act(fn: () => Promise<unknown>, okMsg: string): Promise<ActionResult> {
   try {
-    const newId = await fn();
-    const id = typeof newId === "string" ? newId : tripId;
-    revalidatePath(id ? `/trips/${id}` : "/trips");
-    redirect(`/trips/${id}?ok=${encodeURIComponent(okMsg)}`);
+    await fn();
+    revalidatePath("/", "layout");
+    return { ok: okMsg };
   } catch (err) {
     if (isRedirect(err)) throw err;
-    const msg = err instanceof Error ? err.message : "Something went wrong";
-    redirect(
-      tripId
-        ? `/trips/${tripId}?error=${encodeURIComponent(msg)}`
-        : `/trips/new?error=${encodeURIComponent(msg)}`,
-    );
+    return { error: err instanceof Error ? err.message : "Something went wrong" };
   }
 }
+
+// ── Navigation actions (these MOVE pages, so they keep redirects) ──
 
 export async function createTrip(formData: FormData) {
   const profile = await requireOrgStaff();
   const vehicleId = str(formData, "vehicleId");
-  await run(null, () => trips.createDraftTrip(profile, vehicleId), "Draft trip created — attach E-Way Bills");
+  let tripId: string;
+  try {
+    tripId = await trips.createDraftTrip(profile, vehicleId);
+  } catch (err) {
+    if (isRedirect(err)) throw err;
+    const msg = err instanceof Error ? err.message : "Could not create trip";
+    redirect(`/trips/new?error=${encodeURIComponent(msg)}`);
+  }
+  redirect(`/trips/${tripId}?ok=${encodeURIComponent("Draft trip created — attach E-Way Bills")}`);
 }
 
-/** Draft-only hard delete — the list page gets the success banner. */
+/** EWB-first creation: one submit = draft trip + fetched E-Way Bill attached. */
+export async function createTripFromEwb(formData: FormData) {
+  const profile = await requireOrgStaff();
+  const vehicleId = str(formData, "vehicleId");
+  const ewbNo = str(formData, "ewbNo");
+  let tripId: string;
+  try {
+    tripId = await trips.createDraftTrip(profile, vehicleId);
+    await trips.attachEwb(profile, tripId, ewbNo);
+  } catch (err) {
+    if (isRedirect(err)) throw err;
+    const msg = err instanceof Error ? err.message : "Could not create trip";
+    redirect(`/trips/new?error=${encodeURIComponent(msg)}`);
+  }
+  redirect(
+    `/trips/${tripId}?ok=${encodeURIComponent("Trip created from E-Way Bill — set route, crew and money next")}`,
+  );
+}
+
+/** Draft-only hard delete — lands on the list with a banner. */
 export async function deleteTripAction(formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
@@ -59,38 +85,19 @@ export async function deleteTripAction(formData: FormData) {
   redirect(`/trips?ok=${encodeURIComponent("Draft trip deleted")}`);
 }
 
-/** EWB-first creation: one submit = draft trip + fetched E-Way Bill attached. */
-export async function createTripFromEwb(formData: FormData) {
-  const profile = await requireOrgStaff();
-  const vehicleId = str(formData, "vehicleId");
-  const ewbNo = str(formData, "ewbNo");
-  await run(
-    null,
-    async () => {
-      const tripId = await trips.createDraftTrip(profile, vehicleId);
-      await trips.attachEwb(profile, tripId, ewbNo);
-      return tripId;
-    },
-    "Trip created from E-Way Bill — set route, crew and money next",
-  );
-}
+// ── In-place actions (result shows inline, page never jumps) ──
 
-export async function attachEwbFetch(formData: FormData) {
+export async function attachEwbFetch(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
-    () => trips.attachEwb(profile, tripId, str(formData, "ewbNo")),
-    "E-Way Bill fetched & attached",
-  );
+  return act(() => trips.attachEwb(profile, tripId, str(formData, "ewbNo")), "E-Way Bill fetched & attached");
 }
 
-export async function attachEwbManualAction(formData: FormData) {
+export async function attachEwbManualAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
   const weight = opt(formData, "weightKg");
-  await run(
-    tripId,
+  return act(
     () =>
       trips.attachEwbManual(profile, tripId, {
         ewbNo: str(formData, "ewbNo"),
@@ -107,17 +114,16 @@ export async function attachEwbManualAction(formData: FormData) {
   );
 }
 
-export async function detachEwbAction(formData: FormData) {
+export async function detachEwbAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(tripId, () => trips.detachEwb(profile, tripId, str(formData, "ewbId")), "E-Way Bill removed");
+  return act(() => trips.detachEwb(profile, tripId, str(formData, "ewbId")), "E-Way Bill removed");
 }
 
-export async function savePlan(formData: FormData) {
+export async function savePlan(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
+  return act(
     () =>
       trips.updatePlan(profile, tripId, {
         routeId: opt(formData, "routeId"),
@@ -129,76 +135,55 @@ export async function savePlan(formData: FormData) {
   );
 }
 
-export async function saveCrew(formData: FormData) {
+export async function saveCrew(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
   const primary = str(formData, "primaryDriverId");
-  await run(
-    tripId,
-    async () => {
-      if (!primary) throw new Error("Select a primary driver");
-      await trips.setCrew(profile, tripId, {
-        primaryDriverId: primary,
-        secondaryDriverId: opt(formData, "secondaryDriverId"),
-      });
-    },
-    "Crew assigned",
-  );
+  return act(async () => {
+    if (!primary) throw new Error("Select a primary driver");
+    await trips.setCrew(profile, tripId, {
+      primaryDriverId: primary,
+      secondaryDriverId: opt(formData, "secondaryDriverId"),
+    });
+  }, "Crew assigned");
 }
 
-export async function loadCharges(formData: FormData) {
+export async function loadCharges(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(tripId, () => trips.ensureCharges(profile, tripId), "Charges loaded");
+  return act(() => trips.ensureCharges(profile, tripId), "Charges loaded");
 }
 
-export async function saveChargeAction(formData: FormData) {
+export async function saveChargeAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
+  return act(
     () =>
-      trips.saveCharge(
-        profile,
-        tripId,
-        str(formData, "chargeId"),
-        Number(str(formData, "amount") || "0"),
-      ),
+      trips.saveCharge(profile, tripId, str(formData, "chargeId"), Number(str(formData, "amount") || "0")),
     "Charge updated",
   );
 }
 
-export async function addChargeAction(formData: FormData) {
+export async function addChargeAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
+  return act(
     () =>
-      trips.addCharge(
-        profile,
-        tripId,
-        str(formData, "chargeType"),
-        Number(str(formData, "amount") || "0"),
-      ),
+      trips.addCharge(profile, tripId, str(formData, "chargeType"), Number(str(formData, "amount") || "0")),
     "Charge added",
   );
 }
 
-export async function deleteChargeAction(formData: FormData) {
+export async function deleteChargeAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
-    () => trips.deleteCharge(profile, tripId, str(formData, "chargeId")),
-    "Charge removed",
-  );
+  return act(() => trips.deleteCharge(profile, tripId, str(formData, "chargeId")), "Charge removed");
 }
 
-export async function addAdvanceAction(formData: FormData) {
+export async function addAdvanceAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
+  return act(
     () =>
       trips.addAdvance(profile, tripId, {
         driverId: str(formData, "driverId"),
@@ -210,151 +195,107 @@ export async function addAdvanceAction(formData: FormData) {
   );
 }
 
-export async function activateTrip(formData: FormData) {
+export async function activateTrip(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(tripId, () => trips.approveAndActivate(profile, tripId), "Trip is READY — driver can start");
+  return act(() => trips.approveAndActivate(profile, tripId), "Trip is READY — driver can start");
 }
 
-export async function transitionAction(formData: FormData) {
+export async function transitionAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
   const to = str(formData, "to") as TripStatus;
-  await run(
-    tripId,
+  return act(
     () => trips.transitionTrip(profile, tripId, to, opt(formData, "reason") ?? undefined),
-    `Status updated`,
+    "Status updated",
   );
 }
 
 // ── POD & Settlements ────────────────────────────────────────
 
-export async function uploadPodAction(formData: FormData) {
+export async function uploadPodAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
   const file = formData.get("file");
-  await run(
-    tripId,
-    async () => {
-      const { uploadPod } = await import("@/server/services/pod.service");
-      if (!(file instanceof File)) throw new Error("Choose a file first");
-      await uploadPod(profile, tripId, opt(formData, "ewbId"), file);
-    },
-    "POD uploaded — waiting for verification",
-  );
+  return act(async () => {
+    const { uploadPod } = await import("@/server/services/pod.service");
+    if (!(file instanceof File)) throw new Error("Choose a file first");
+    await uploadPod(profile, tripId, opt(formData, "ewbId"), file);
+  }, "POD uploaded — waiting for verification");
 }
 
-export async function verifyPodAction(formData: FormData) {
+export async function verifyPodAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
-  const tripId = str(formData, "tripId");
-  const back = str(formData, "back") || `/trips/${tripId}`;
-  try {
+  return act(async () => {
     const { verifyPod } = await import("@/server/services/pod.service");
     await verifyPod(profile, str(formData, "podId"));
-    revalidatePath(back);
-    redirect(`${back}?ok=${encodeURIComponent("POD verified")}`);
-  } catch (err) {
-    if (isRedirect(err)) throw err;
-    redirect(`${back}?error=${encodeURIComponent(err instanceof Error ? err.message : "Failed")}`);
-  }
+  }, "POD verified");
 }
 
-export async function rejectPodAction(formData: FormData) {
+export async function rejectPodAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
-  const tripId = str(formData, "tripId");
-  const back = str(formData, "back") || `/trips/${tripId}`;
-  try {
+  return act(async () => {
     const { rejectPod } = await import("@/server/services/pod.service");
     await rejectPod(profile, str(formData, "podId"), str(formData, "reason"));
-    revalidatePath(back);
-    redirect(`${back}?ok=${encodeURIComponent("POD rejected — driver will be notified")}`);
-  } catch (err) {
-    if (isRedirect(err)) throw err;
-    redirect(`${back}?error=${encodeURIComponent(err instanceof Error ? err.message : "Failed")}`);
-  }
+  }, "POD rejected — driver will be notified");
 }
 
-export async function generateSettlementsAction(formData: FormData) {
+export async function generateSettlementsAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
-    async () => {
-      const { generateSettlements } = await import("@/server/services/settlement.service");
-      await generateSettlements(profile, tripId);
-    },
-    "Settlements generated",
-  );
+  return act(async () => {
+    const { generateSettlements } = await import("@/server/services/settlement.service");
+    await generateSettlements(profile, tripId);
+  }, "Settlements generated");
 }
 
-export async function updateSettlementAction(formData: FormData) {
+export async function updateSettlementAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
-  const tripId = str(formData, "tripId");
-  await run(
-    tripId,
-    async () => {
-      const { updateSettlement } = await import("@/server/services/settlement.service");
-      await updateSettlement(profile, str(formData, "settlementId"), {
-        gross: Number(str(formData, "gross") || "0"),
-        bonus: Number(str(formData, "bonus") || "0"),
-        penalty: Number(str(formData, "penalty") || "0"),
-        penaltyReason: opt(formData, "penaltyReason"),
-      });
-    },
-    "Settlement updated",
-  );
+  return act(async () => {
+    const { updateSettlement } = await import("@/server/services/settlement.service");
+    await updateSettlement(profile, str(formData, "settlementId"), {
+      gross: Number(str(formData, "gross") || "0"),
+      bonus: Number(str(formData, "bonus") || "0"),
+      penalty: Number(str(formData, "penalty") || "0"),
+      penaltyReason: opt(formData, "penaltyReason"),
+    });
+  }, "Settlement updated");
 }
 
-export async function markSettlementPaidAction(formData: FormData) {
+export async function markSettlementPaidAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
-  const tripId = str(formData, "tripId");
-  await run(
-    tripId,
-    async () => {
-      const { markSettlementPaid } = await import("@/server/services/settlement.service");
-      await markSettlementPaid(profile, str(formData, "settlementId"), {
-        mode: str(formData, "mode") as PayMode,
-        refNo: opt(formData, "refNo"),
-      });
-    },
-    "Settlement PAID",
-  );
+  return act(async () => {
+    const { markSettlementPaid } = await import("@/server/services/settlement.service");
+    await markSettlementPaid(profile, str(formData, "settlementId"), {
+      mode: str(formData, "mode") as PayMode,
+      refNo: opt(formData, "refNo"),
+    });
+  }, "Settlement PAID");
 }
 
 // ── Customer invoicing ───────────────────────────────────────
 
-export async function generateInvoiceAction(formData: FormData) {
+export async function generateInvoiceAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  await run(
-    tripId,
-    async () => {
-      const { generateInvoice } = await import("@/server/services/invoice.service");
-      const contractLineId = opt(formData, "contractLineId");
-      await generateInvoice(profile, tripId, {
-        customerId: str(formData, "customerId"),
-        contractLineId,
-        manualRatePerMt: opt(formData, "manualRate") ? Number(str(formData, "manualRate")) : null,
-        weightMt: Number(str(formData, "weightMt") || "0"),
-        otherCharges: Number(str(formData, "otherCharges") || "0"),
-        gstAmount: Number(str(formData, "gstAmount") || "0"),
-      });
-    },
-    "Invoice raised",
-  );
+  return act(async () => {
+    const { generateInvoice } = await import("@/server/services/invoice.service");
+    const contractLineId = opt(formData, "contractLineId");
+    await generateInvoice(profile, tripId, {
+      customerId: str(formData, "customerId"),
+      contractLineId,
+      manualRatePerMt: opt(formData, "manualRate") ? Number(str(formData, "manualRate")) : null,
+      weightMt: Number(str(formData, "weightMt") || "0"),
+      otherCharges: Number(str(formData, "otherCharges") || "0"),
+      gstAmount: Number(str(formData, "gstAmount") || "0"),
+    });
+  }, "Invoice raised");
 }
 
-export async function recordReceiptAction(formData: FormData) {
+export async function recordReceiptAction(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
-  const tripId = str(formData, "tripId");
-  const back = str(formData, "back") || `/trips/${tripId}`;
-  try {
+  return act(async () => {
     const { recordReceipt } = await import("@/server/services/invoice.service");
     await recordReceipt(profile, str(formData, "invoiceId"), Number(str(formData, "amount") || "0"));
-    revalidatePath(back);
-    redirect(`${back}?ok=${encodeURIComponent("Receipt recorded")}`);
-  } catch (err) {
-    if (isRedirect(err)) throw err;
-    redirect(`${back}?error=${encodeURIComponent(err instanceof Error ? err.message : "Failed")}`);
-  }
+  }, "Receipt recorded");
 }

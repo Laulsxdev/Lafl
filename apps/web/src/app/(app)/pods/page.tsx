@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ActionForm from "@/components/action-form";
 import { requireOrgStaff } from "@/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -89,23 +90,21 @@ export default async function PodQueuePage({
               </a>
             </div>
             <div className="flex items-center gap-2">
-              <form action={verifyPodAction}>
+              <ActionForm action={verifyPodAction}>
                 <input type="hidden" name="tripId" value={p.trip_id} />
                 <input type="hidden" name="podId" value={p.id} />
-                <input type="hidden" name="back" value="/pods" />
                 <button type="submit" className={`${btnSuccess} px-3 py-1.5 text-xs`}>
                   Verify
                 </button>
-              </form>
-              <form action={rejectPodAction} className="flex items-center gap-1.5">
+              </ActionForm>
+              <ActionForm action={rejectPodAction} resetOnOk className="flex items-center gap-1.5">
                 <input type="hidden" name="tripId" value={p.trip_id} />
                 <input type="hidden" name="podId" value={p.id} />
-                <input type="hidden" name="back" value="/pods" />
                 <input name="reason" placeholder="Reject reason" required className={`${inputSmCls} px-2 py-1 text-xs`} />
                 <button type="submit" className={`${btnDanger} px-2.5 py-1 text-xs`}>
                   Reject
                 </button>
-              </form>
+              </ActionForm>
             </div>
           </div>
         ))}
@@ -140,7 +139,7 @@ export default async function PodQueuePage({
                 {t.status.replace(/_/g, " ")}
               </span>
             </div>
-            <form action={uploadPodAction} className="flex flex-wrap items-center gap-2">
+            <ActionForm action={uploadPodAction} resetOnOk className="flex flex-wrap items-center gap-2">
               <input type="hidden" name="tripId" value={t.id} />
               <input
                 name="file"
@@ -160,7 +159,7 @@ export default async function PodQueuePage({
               <button type="submit" className={`${btnGhost} px-3 py-1.5 text-xs`}>
                 Upload
               </button>
-            </form>
+            </ActionForm>
           </div>
         ))}
         {(awaited ?? []).length === 0 && (
