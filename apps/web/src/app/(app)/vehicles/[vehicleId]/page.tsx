@@ -113,6 +113,7 @@ export default async function VehicleDetailPage({
                 lng={pos.lng}
                 label={vehicle.reg_no}
                 trail={(trail ?? []).map((t) => ({ lat: t.lat, lng: t.lng })).reverse()}
+                vehicleId={vehicle.id}
               />
             </div>
           ) : (

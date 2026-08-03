@@ -17,6 +17,7 @@ export default function VehicleMap(props: {
   lng: number;
   label: string;
   trail: TrailPoint[];
+  vehicleId?: string;
 }) {
   return <VehicleMapInner {...props} />;
 }

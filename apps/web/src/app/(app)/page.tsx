@@ -65,7 +65,7 @@ export default async function DashboardPage() {
     count(db, "trips"),
     db
       .from("vehicle_latest_positions")
-      .select("vehicle_id, reg_no, lat, lng, speed_kmh, ts, vehicle_status")
+      .select("vehicle_id, reg_no, lat, lng, speed_kmh, heading, ts, vehicle_status")
       .order("ts", { ascending: false })
       .limit(300),
     db.from("org_invoice_summary").select("*").maybeSingle(),
@@ -106,6 +106,7 @@ export default async function DashboardPage() {
             lat: p.lat,
             lng: p.lng,
             speed_kmh: p.speed_kmh,
+            heading: p.heading,
             ts: p.ts ?? nowIso,
             vehicle_status: p.vehicle_status ?? "available",
           },

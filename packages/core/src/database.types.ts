@@ -1738,6 +1738,7 @@ export type Database = {
       }
       vehicle_latest_positions: {
         Row: {
+          heading: number | null
           lat: number | null
           lng: number | null
           org_id: string | null
