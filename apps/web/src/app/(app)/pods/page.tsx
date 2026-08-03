@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireOrgStaff } from "@/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { rejectPodAction, verifyPodAction } from "../trips/actions";
+import { rejectPodAction, uploadPodAction, verifyPodAction } from "../trips/actions";
 import {
   EmptyState,
   PageHeader,
@@ -10,6 +10,7 @@ import {
   bannerError,
   bannerOk,
   btnDanger,
+  btnGhost,
   btnSuccess,
   inputSmCls,
 } from "@/components/ui";
@@ -31,12 +32,28 @@ export default async function PodQueuePage({
       .order("uploaded_at"),
     db
       .from("trips")
-      .select("id, trip_no, ops_closed_at, vehicles(reg_no)")
-      .in("status", ["unloaded", "ops_closed"])
+      .select("id, trip_no, status, ops_closed_at, vehicles(reg_no)")
+      .in("status", ["at_destination", "unloaded", "ops_closed"])
       .in("pod_status", ["awaited"])
       .order("ops_closed_at", { ascending: true, nullsFirst: false })
       .limit(30),
   ]);
+
+  // EWB options for the inline upload forms (one query for all listed trips)
+  const awaitedIds = (awaited ?? []).map((t) => t.id);
+  const { data: awaitedEwbs } = awaitedIds.length
+    ? await db
+        .from("trip_eway_bills")
+        .select("trip_id, eway_bills(id, ewb_no)")
+        .in("trip_id", awaitedIds)
+    : { data: [] as never[] };
+  const ewbsByTrip = new Map<string, { id: string; ewb_no: string }[]>();
+  for (const l of awaitedEwbs ?? []) {
+    if (!l.eway_bills) continue;
+    const list = ewbsByTrip.get(l.trip_id) ?? [];
+    list.push({ id: l.eway_bills.id, ewb_no: l.eway_bills.ewb_no });
+    ewbsByTrip.set(l.trip_id, list);
+  }
 
   const admin = createSupabaseAdminClient();
   const urls = new Map<string, string>();
@@ -105,16 +122,46 @@ export default async function PodQueuePage({
       <div className="mt-10">
         <SectionHeading title="Trips still missing POD" count={(awaited ?? []).length} />
       </div>
+      <p className="mt-1 text-xs text-neutral-400">
+        Got the photo on WhatsApp? Upload it right here — it lands on the trip and joins
+        the verification queue above.
+      </p>
       <div className="mt-3 space-y-1.5">
         {(awaited ?? []).map((t) => (
-          <Link
+          <div
             key={t.id}
-            href={`/trips/${t.id}`}
-            className="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300 hover:bg-neutral-50"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs"
           >
-            <span className="font-medium text-neutral-900">{t.trip_no} · {t.vehicles?.reg_no}</span>
-            <span className="text-neutral-400">awaiting upload</span>
-          </Link>
+            <div>
+              <Link href={`/trips/${t.id}`} className="font-medium text-neutral-900 hover:underline">
+                {t.trip_no} · {t.vehicles?.reg_no}
+              </Link>
+              <span className="ml-2 text-xs capitalize text-neutral-400">
+                {t.status.replace(/_/g, " ")}
+              </span>
+            </div>
+            <form action={uploadPodAction} className="flex flex-wrap items-center gap-2">
+              <input type="hidden" name="tripId" value={t.id} />
+              <input
+                name="file"
+                type="file"
+                required
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                className="max-w-52 text-xs"
+              />
+              <select name="ewbId" className={`${inputSmCls} px-2 py-1 text-xs`}>
+                <option value="">Whole trip</option>
+                {(ewbsByTrip.get(t.id) ?? []).map((e) => (
+                  <option key={e.id} value={e.id}>
+                    EWB {e.ewb_no}
+                  </option>
+                ))}
+              </select>
+              <button type="submit" className={`${btnGhost} px-3 py-1.5 text-xs`}>
+                Upload
+              </button>
+            </form>
+          </div>
         ))}
         {(awaited ?? []).length === 0 && (
           <EmptyState
