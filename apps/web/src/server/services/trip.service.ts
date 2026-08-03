@@ -64,6 +64,42 @@ export async function createDraftTrip(
   return data.id;
 }
 
+/**
+ * Hard-delete a mistaken DRAFT. Activated trips are business records — they
+ * can only be cancelled/aborted, never erased. Advances block deletion: money
+ * that left the drawer must keep its paper trail.
+ */
+export async function deleteDraftTrip(
+  profile: SessionProfile,
+  tripId: string,
+): Promise<void> {
+  const db = await createSupabaseServerClient();
+  const trip = await getTrip(db, tripId);
+  assertDraft(trip.status);
+
+  const { count: advCount } = await db
+    .from("advances")
+    .select("id", { count: "exact", head: true })
+    .eq("trip_id", tripId);
+  if ((advCount ?? 0) > 0) {
+    throw new Error(
+      "This draft has advances recorded — money entries cannot be erased. Activate and cancel instead.",
+    );
+  }
+
+  // Children first (releases any attached EWBs), then the trip itself.
+  await db.from("trip_eway_bills").delete().eq("trip_id", tripId);
+  await db.from("trip_drivers").delete().eq("trip_id", tripId);
+  await db.from("trip_charges").delete().eq("trip_id", tripId);
+  const { error } = await db
+    .from("trips")
+    .delete()
+    .eq("id", tripId)
+    .eq("status", "draft"); // re-checked at the DB so a race can't delete a live trip
+  if (error) throw new Error(error.message);
+  await db.from("activity_logs").delete().eq("entity_type", "trip").eq("entity_id", tripId);
+}
+
 /** Attach an EWB by fetching it from MarketPe (org-configured GSTIN). */
 export async function attachEwb(
   profile: SessionProfile,

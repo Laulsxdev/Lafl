@@ -3,6 +3,7 @@ import { CHARGE_TYPES, formatInr, formatWeightMt } from "@lafl/core";
 import { requireOrgStaff } from "@/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import ConfirmSubmit from "@/components/confirm-submit";
 import SelectSearch from "@/components/select-search";
 import SharePodLink from "@/components/share-pod-link";
 import { STATUS_PILL } from "@/features/status";
@@ -26,6 +27,7 @@ import {
   attachEwbFetch,
   attachEwbManualAction,
   deleteChargeAction,
+  deleteTripAction,
   detachEwbAction,
   generateInvoiceAction,
   generateSettlementsAction,
@@ -247,6 +249,17 @@ export default async function TripDetailPage({
         <span className={`${pillCls} bg-neutral-100 px-3 py-1 font-medium text-neutral-600`}>
           Payment: {trip.settlement_status}
         </span>
+        {isDraft && (
+          <form action={deleteTripAction} className="ml-auto">
+            <input type="hidden" name="tripId" value={tripId} />
+            <ConfirmSubmit
+              message={`Delete draft ${trip.trip_no}? This cannot be undone — attached E-Way Bills will be released.`}
+              className="text-xs font-medium text-red-600 underline underline-offset-2 hover:text-red-800"
+            >
+              Delete draft
+            </ConfirmSubmit>
+          </form>
+        )}
       </div>
       <p className="mt-1.5 text-sm text-neutral-500">
         {trip.vehicles?.reg_no} · {trip.vehicles?.vehicle_type}

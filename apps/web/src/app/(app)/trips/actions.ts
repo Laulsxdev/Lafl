@@ -44,6 +44,21 @@ export async function createTrip(formData: FormData) {
   await run(null, () => trips.createDraftTrip(profile, vehicleId), "Draft trip created — attach E-Way Bills");
 }
 
+/** Draft-only hard delete — the list page gets the success banner. */
+export async function deleteTripAction(formData: FormData) {
+  const profile = await requireOrgStaff();
+  const tripId = str(formData, "tripId");
+  try {
+    await trips.deleteDraftTrip(profile, tripId);
+  } catch (err) {
+    if (isRedirect(err)) throw err;
+    const msg = err instanceof Error ? err.message : "Could not delete the draft";
+    redirect(`/trips/${tripId}?error=${encodeURIComponent(msg)}`);
+  }
+  revalidatePath("/trips");
+  redirect(`/trips?ok=${encodeURIComponent("Draft trip deleted")}`);
+}
+
 /** EWB-first creation: one submit = draft trip + fetched E-Way Bill attached. */
 export async function createTripFromEwb(formData: FormData) {
   const profile = await requireOrgStaff();

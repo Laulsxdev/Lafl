@@ -6,6 +6,7 @@ import { STATUS_PILL, statusLabel } from "@/features/status";
 import {
   EmptyState,
   PageHeader,
+  bannerOk,
   btnPrimary,
   cardCls,
   pillCls,
@@ -31,10 +32,10 @@ const fmt = (d: string | null) =>
 export default async function TripsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; ok?: string }>;
 }) {
   await requireOrgStaff();
-  const { tab = "live" } = await searchParams;
+  const { tab = "live", ok } = await searchParams;
   const db = await createSupabaseServerClient();
 
   let q = db
@@ -55,6 +56,8 @@ export default async function TripsPage({
           + New Trip
         </Link>
       </PageHeader>
+
+      {ok && <p className={`mt-4 ${bannerOk}`}>{ok}</p>}
 
       {/* status tabs */}
       <div className="mt-6 flex flex-wrap gap-1.5">
