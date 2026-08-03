@@ -85,8 +85,8 @@ export async function pollIntanglesOrg(orgId: string): Promise<IntanglesPollResu
   }
 
   const now = Date.now();
-  let fixesIngested = 0;
   let staleSkipped = 0;
+  const payloads = [];
   for (const v of vehicles) {
     const g = v.gps_info;
     if (!g?.timestamp || g.loc?.lat === undefined || g.loc?.lng === undefined) continue;
@@ -104,9 +104,19 @@ export async function pollIntanglesOrg(orgId: string): Promise<IntanglesPollResu
       geo: { lat: g.loc.lat, lng: g.loc.lng, acc: g.fix ?? 2 },
       vehicle_id: v.plate,
     });
-    if (!parsed.success) continue;
-    await ingestGpsFix(orgId, parsed.data);
-    fixesIngested++;
+    if (parsed.success) payloads.push(parsed.data);
+  }
+
+  // Ingest in parallel batches — sequential DB roundtrips from the function
+  // region to Supabase blow past the serverless time limit. Fixes are for
+  // distinct vehicles, so concurrent ingestion is safe (dedup is by refid).
+  let fixesIngested = 0;
+  const BATCH = 10;
+  for (let i = 0; i < payloads.length; i += BATCH) {
+    const results = await Promise.allSettled(
+      payloads.slice(i, i + BATCH).map((p) => ingestGpsFix(orgId, p)),
+    );
+    fixesIngested += results.filter((r) => r.status === "fulfilled").length;
   }
 
   return {
