@@ -759,6 +759,8 @@ export type Database = {
           effective_to: string | null
           fastag: number
           freight: number
+          fuel_liters: number | null
+          fuel_type: string | null
           id: string
           loading_charges: number
           misc: number
@@ -777,6 +779,8 @@ export type Database = {
           effective_to?: string | null
           fastag?: number
           freight?: number
+          fuel_liters?: number | null
+          fuel_type?: string | null
           id?: string
           loading_charges?: number
           misc?: number
@@ -795,6 +799,8 @@ export type Database = {
           effective_to?: string | null
           fastag?: number
           freight?: number
+          fuel_liters?: number | null
+          fuel_type?: string | null
           id?: string
           loading_charges?: number
           misc?: number
@@ -824,6 +830,41 @@ export type Database = {
             columns: ["route_id"]
             isOneToOne: false
             referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials: {
+        Row: {
+          active: boolean
+          created_at: string
+          hsn_code: string | null
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          hsn_code?: string | null
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          hsn_code?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1579,6 +1620,7 @@ export type Database = {
           capacity_kg: number | null
           created_at: string
           fitness_expiry: string | null
+          fuel_type: string | null
           gps_device_id: string | null
           id: string
           insurance_expiry: string | null
@@ -1595,6 +1637,7 @@ export type Database = {
           registration_date: string | null
           status: Database["public"]["Enums"]["vehicle_status"]
           trailer_type: string | null
+          tyre_count: number | null
           updated_at: string
           vehicle_type: string
         }
@@ -1602,6 +1645,7 @@ export type Database = {
           capacity_kg?: number | null
           created_at?: string
           fitness_expiry?: string | null
+          fuel_type?: string | null
           gps_device_id?: string | null
           id?: string
           insurance_expiry?: string | null
@@ -1618,6 +1662,7 @@ export type Database = {
           registration_date?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
           trailer_type?: string | null
+          tyre_count?: number | null
           updated_at?: string
           vehicle_type: string
         }
@@ -1625,6 +1670,7 @@ export type Database = {
           capacity_kg?: number | null
           created_at?: string
           fitness_expiry?: string | null
+          fuel_type?: string | null
           gps_device_id?: string | null
           id?: string
           insurance_expiry?: string | null
@@ -1641,6 +1687,7 @@ export type Database = {
           registration_date?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
           trailer_type?: string | null
+          tyre_count?: number | null
           updated_at?: string
           vehicle_type?: string
         }

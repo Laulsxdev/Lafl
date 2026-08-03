@@ -245,21 +245,25 @@ export async function ensureCharges(
 
   const { data: vehicle } = await db
     .from("vehicles")
-    .select("vehicle_type")
+    .select("vehicle_type, fuel_type")
     .eq("id", trip.vehicle_id)
     .single();
 
   let master: Record<string, number> | null = null;
   if (trip.route_id && vehicle) {
-    const { data: rate } = await db
+    // Team budgets are per route + fuel category (Diesel/CNG). Prefer the
+    // vehicle's fuel type, fall back to Diesel, then to any live rate.
+    const { data: rates } = await db
       .from("master_trip_rates")
       .select("*")
       .eq("route_id", trip.route_id)
-      .eq("vehicle_type", vehicle.vehicle_type)
       .is("effective_to", null)
-      .order("effective_from", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("effective_from", { ascending: false });
+    const rate =
+      (vehicle.fuel_type && rates?.find((r) => r.fuel_type === vehicle.fuel_type)) ||
+      rates?.find((r) => r.fuel_type === "Diesel") ||
+      rates?.[0] ||
+      null;
     if (rate) {
       master = {
         freight: rate.freight,

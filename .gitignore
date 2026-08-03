@@ -18,3 +18,5 @@ coverage/
 # local data & screenshots (not part of the codebase)
 *.XLS
 /*.png
+.vercel
+.env*
