@@ -1,0 +1,20 @@
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+.env*.local
+.DS_Store
+coverage/
+
+# local tooling & artifacts
+.claude/
+.playwright-mcp/
+.code-review-graph/
+.obsidian/
+*.base
+
+# local data & screenshots (not part of the codebase)
+*.XLS
+/*.png
