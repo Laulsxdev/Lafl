@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { CHARGE_TYPES, formatInr, formatWeightMt } from "@lafl/core";
+import { parseEwayResponse } from "@lafl/marketpe";
 import { requireOrgStaff } from "@/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -98,7 +99,7 @@ export default async function TripDetailPage({
   ] = await Promise.all([
     db
       .from("trip_eway_bills")
-      .select("ewb_id, eway_bills(id, ewb_no, consignor_name, consignee_name, origin, destination, material, weight_kg, valid_until, status)")
+      .select("ewb_id, eway_bills(id, ewb_no, consignor_name, consignee_name, origin, destination, material, weight_kg, valid_until, status, raw_json)")
       .eq("trip_id", tripId),
     db
       .from("trip_drivers")
@@ -169,6 +170,20 @@ export default async function TripDetailPage({
   }
 
   const isDraft = trip.status === "draft";
+
+  // Compliance guard: the E-Way Bill's Part-B declares which vehicle carries
+  // the load. If the trip runs a different vehicle, checkposts can fine —
+  // warn loudly until dispatch, but never block (Part-B is often updated late).
+  const tripReg = (trip.vehicles?.reg_no ?? "").replace(/[^A-Z0-9]/g, "");
+  const partBMismatches =
+    tripReg && ["draft", "planned", "ready", "in_transit"].includes(trip.status)
+      ? (ewbLinks ?? []).flatMap((l) => {
+          const partB = parseEwayResponse(l.eway_bills?.raw_json)?.vehicleNo ?? null;
+          return partB && partB !== tripReg
+            ? [{ ewbNo: l.eway_bills?.ewb_no ?? "?", partB }]
+            : [];
+        })
+      : [];
 
   // Rank routes by how well they match the attached E-Way Bills' places —
   // the EWB already knows where the load is going, so "→ JAJPUR" routes
@@ -253,7 +268,20 @@ export default async function TripDetailPage({
           <form action={deleteTripAction} className="ml-auto">
             <input type="hidden" name="tripId" value={tripId} />
             <ConfirmSubmit
-              message={`Delete draft ${trip.trip_no}? This cannot be undone — attached E-Way Bills will be released.`}
+              message={[
+                `Delete draft ${trip.trip_no}?`,
+                (ewbLinks ?? []).length > 0
+                  ? `• ${(ewbLinks ?? []).length} E-Way Bill(s) will be detached and released for other trips`
+                  : null,
+                activeCrew.length > 0
+                  ? `• ${activeCrew.length} assigned driver(s) will be unassigned`
+                  : null,
+                `• Vehicle ${trip.vehicles?.reg_no ?? ""} stays available (drafts never block it)`,
+                ``,
+                `This cannot be undone. To keep a record instead, activate and cancel the trip.`,
+              ]
+                .filter((l) => l !== null)
+                .join("\n")}
               className="text-xs font-medium text-red-600 underline underline-offset-2 hover:text-red-800"
             >
               Delete draft
@@ -269,6 +297,21 @@ export default async function TripDetailPage({
 
       {error && <p className={`mt-4 ${bannerError}`}>{error}</p>}
       {ok && <p className={`mt-4 ${bannerOk}`}>{ok}</p>}
+
+      {partBMismatches.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>⚠ E-Way Bill vehicle mismatch.</strong>{" "}
+          {partBMismatches.map((m) => (
+            <span key={m.ewbNo}>
+              EWB <span className="font-mono font-semibold">{m.ewbNo}</span> Part-B says{" "}
+              <span className="font-mono font-semibold">{m.partB}</span>, but this trip runs{" "}
+              <span className="font-mono font-semibold">{trip.vehicles?.reg_no}</span>.{" "}
+            </span>
+          ))}
+          Update Part-B on the E-Way Bill portal before dispatch — checkposts fine
+          mismatched vehicles.
+        </div>
+      )}
 
       {/* Lifecycle actions */}
       {!isDraft && (next || ["draft", "planned", "ready", "in_transit", "at_destination", "unloaded"].includes(trip.status)) && (
