@@ -167,6 +167,22 @@ export default async function TripDetailPage({
   }
 
   const isDraft = trip.status === "draft";
+
+  // Pre-fill crew from this vehicle's most recent trip — drivers usually
+  // stick to their truck, so the right name is one click away.
+  let lastPrimary = "";
+  let lastSecondary = "";
+  if (isDraft && (crew ?? []).length === 0) {
+    const { data: lastCrew } = await db
+      .from("trip_drivers")
+      .select("driver_id, role, assigned_at, trips!inner(vehicle_id)")
+      .eq("trips.vehicle_id", trip.vehicle_id)
+      .neq("trip_id", tripId)
+      .order("assigned_at", { ascending: false })
+      .limit(4);
+    lastPrimary = lastCrew?.find((c) => c.role === "primary")?.driver_id ?? "";
+    lastSecondary = lastCrew?.find((c) => c.role === "secondary")?.driver_id ?? "";
+  }
   const activeCrew = (crew ?? []).filter((c) => !c.released_at);
   const totalApproved = (charges ?? []).reduce((s, c) => s + c.approved_amount, 0);
   const totalAdvances = (advances ?? []).reduce((s, a) => s + a.amount, 0);
@@ -365,6 +381,7 @@ export default async function TripDetailPage({
                 name="primaryDriverId"
                 required
                 placeholder="Primary driver — type name or phone…"
+                defaultValue={lastPrimary}
                 options={(drivers ?? []).map((d) => ({
                   value: d.id,
                   label: d.name,
@@ -376,13 +393,21 @@ export default async function TripDetailPage({
                 placeholder="Second driver (optional)…"
                 allowEmpty
                 emptyLabel="— None —"
+                defaultValue={lastSecondary}
                 options={(drivers ?? []).map((d) => ({
                   value: d.id,
                   label: d.name,
                   hint: d.phone,
                 }))}
               />
-              <button type="submit" className={btnGhost}>Assign crew</button>
+              <div className="flex items-center gap-2">
+                <button type="submit" className={btnGhost}>Assign crew</button>
+                {lastPrimary && (
+                  <span className="text-xs text-neutral-400">
+                    Pre-filled from this vehicle&apos;s last trip — change if needed
+                  </span>
+                )}
+              </div>
             </form>
           )}
         </SectionCard>

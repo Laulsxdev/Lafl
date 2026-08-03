@@ -23,6 +23,8 @@ export interface EwaySummary {
   generatedAt: string | null; // ISO
   validUntil: string | null; // ISO
   distanceKm: number | null;
+  /** Latest Part-B vehicle number (normalized, no spaces), if declared. */
+  vehicleNo: string | null;
 }
 
 /** "30/07/2026 05:40:00 PM" (IST) -> ISO string. Date-only also accepted. */
@@ -81,6 +83,15 @@ export function parseEwayResponse(raw: unknown): EwaySummary | null {
       .filter(Boolean)
       .join(", ") || null;
 
+  // Part-B vehicle history — NIC spells it "VehiclListDetails" (sic). The
+  // LAST entry is the currently assigned vehicle.
+  const vehList = [d.VehiclListDetails, d.vehiclListDetails, d.vehicleListDetails].find(
+    Array.isArray,
+  ) as Array<Record<string, unknown>> | undefined;
+  const lastVeh = vehList?.[vehList.length - 1];
+  const vehicleNo =
+    str(lastVeh?.vehicleNo)?.toUpperCase().replace(/[^A-Z0-9]/g, "") ?? null;
+
   return {
     ewbNo: String(d.ewbNo ?? d.ewayBillNumber),
     status: str(d.status)?.toUpperCase() === "CNL" ? "cancelled" : "active",
@@ -97,5 +108,6 @@ export function parseEwayResponse(raw: unknown): EwaySummary | null {
     generatedAt: parseNicDate(d.ewayBillDate) ?? parseNicDate(d.docDate),
     validUntil: parseNicDate(d.validUpto),
     distanceKm: num(d.actualDist),
+    vehicleNo,
   };
 }

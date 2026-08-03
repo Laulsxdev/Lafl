@@ -44,6 +44,22 @@ export async function createTrip(formData: FormData) {
   await run(null, () => trips.createDraftTrip(profile, vehicleId), "Draft trip created — attach E-Way Bills");
 }
 
+/** EWB-first creation: one submit = draft trip + fetched E-Way Bill attached. */
+export async function createTripFromEwb(formData: FormData) {
+  const profile = await requireOrgStaff();
+  const vehicleId = str(formData, "vehicleId");
+  const ewbNo = str(formData, "ewbNo");
+  await run(
+    null,
+    async () => {
+      const tripId = await trips.createDraftTrip(profile, vehicleId);
+      await trips.attachEwb(profile, tripId, ewbNo);
+      return tripId;
+    },
+    "Trip created from E-Way Bill — set route, crew and money next",
+  );
+}
+
 export async function attachEwbFetch(formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
