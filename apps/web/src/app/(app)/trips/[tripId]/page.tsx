@@ -168,6 +168,38 @@ export default async function TripDetailPage({
 
   const isDraft = trip.status === "draft";
 
+  // Rank routes by how well they match the attached E-Way Bills' places —
+  // the EWB already knows where the load is going, so "→ JAJPUR" routes
+  // surface first and the best destination match comes pre-selected.
+  const placeTokens = (s: string | null | undefined) =>
+    (s ?? "")
+      .toUpperCase()
+      .split(/[^A-Z]+/)
+      .filter((w) => w.length >= 3);
+  const ewbDestTokens = new Set(
+    (ewbLinks ?? []).flatMap((l) => placeTokens(l.eway_bills?.destination)),
+  );
+  const ewbOriginTokens = new Set(
+    (ewbLinks ?? []).flatMap((l) => placeTokens(l.eway_bills?.origin)),
+  );
+  const routeMatchScore = (r: { origin_city: string; dest_city: string }) => {
+    let score = 0;
+    if (placeTokens(r.dest_city).some((t) => ewbDestTokens.has(t))) score += 2;
+    if (placeTokens(r.origin_city).some((t) => ewbOriginTokens.has(t))) score += 1;
+    return score;
+  };
+  const rankedRoutes = (routes ?? [])
+    .map((r) => ({ ...r, score: routeMatchScore(r) }))
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        `${a.origin_city}${a.dest_city}`.localeCompare(`${b.origin_city}${b.dest_city}`),
+    );
+  const suggestedRoute =
+    !trip.route_id && ewbDestTokens.size > 0
+      ? (rankedRoutes.find((r) => r.score >= 2) ?? null)
+      : null;
+
   // Pre-fill crew from this vehicle's most recent trip — drivers usually
   // stick to their truck, so the right name is one click away.
   let lastPrimary = "";
@@ -331,14 +363,20 @@ export default async function TripDetailPage({
               <SelectSearch
                 name="routeId"
                 placeholder="Search route (type origin or destination)…"
-                defaultValue={trip.route_id ?? ""}
+                defaultValue={trip.route_id ?? suggestedRoute?.id ?? ""}
                 allowEmpty
                 emptyLabel="— No route —"
-                options={(routes ?? []).map((r) => ({
+                options={rankedRoutes.map((r) => ({
                   value: r.id,
                   label: `${r.origin_city} → ${r.dest_city}`,
+                  hint: r.score >= 2 ? "suggested — matches E-Way Bill" : undefined,
                 }))}
               />
+              {suggestedRoute && (
+                <p className="text-xs text-neutral-400">
+                  Route pre-selected from the E-Way Bill destination — change if needed.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={labelCls}>Start</label>
