@@ -87,15 +87,17 @@ export default function PodUploadForm({
 
   if (state.ok && fileName) {
     return (
-      <div className="mt-8 rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
+      <div className="mt-8 rounded-2xl border border-green-200 bg-green-50 p-6 text-center sm:p-8">
         <div className="text-5xl">✅</div>
-        <h2 className="mt-3 text-xl font-bold text-green-800">POD received — thank you!</h2>
+        <h2 className="mt-3 text-balance text-xl font-bold text-green-800">
+          POD received — thank you!
+        </h2>
         <p className="mt-2 text-sm text-green-700">
           Our team will check and confirm it. Nothing else to do.
         </p>
         <button
           type="button"
-          className="mt-6 rounded-xl border border-green-300 bg-white px-5 py-3 text-sm font-semibold text-green-800"
+          className="mt-6 w-full rounded-xl border border-green-300 bg-white px-5 py-3 text-sm font-semibold text-green-800 sm:w-auto"
           onClick={() => {
             setFileName(null);
             setPreview(null);
@@ -146,7 +148,7 @@ export default function PodUploadForm({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="w-full rounded-2xl bg-neutral-900 px-6 py-5 text-lg font-bold text-white shadow-lg active:scale-[0.99]"
+        className="w-full rounded-2xl bg-neutral-900 px-4 py-5 text-base font-bold text-white shadow-lg active:scale-[0.99] sm:px-6 sm:text-lg"
       >
         📷 {fileName ? "Retake photo" : "Take POD photo"}
       </button>
@@ -156,11 +158,13 @@ export default function PodUploadForm({
         <img
           src={preview}
           alt="POD preview"
-          className="mx-auto mt-4 max-h-72 rounded-xl border border-neutral-200 object-contain"
+          className="mx-auto mt-4 max-h-64 w-full max-w-full rounded-xl border border-neutral-200 object-contain sm:max-h-72"
         />
       )}
       {fileName && !preview && (
-        <p className="mt-3 text-center text-sm text-neutral-600">Selected: {fileName}</p>
+        <p className="mt-3 break-all text-center text-sm text-neutral-600">
+          Selected: {fileName}
+        </p>
       )}
 
       {warnings.map((wr) => (
@@ -174,12 +178,12 @@ export default function PodUploadForm({
 
       {fileName && ewbs.length > 1 && (
         <div className="mt-4">
-          <label className="text-sm font-semibold text-neutral-700">
+          <label className="block text-sm font-semibold text-neutral-700">
             Which consignment is this POD for?
           </label>
           <select
             name="ewbId"
-            className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-3 py-3 text-base"
+            className="mt-1 w-full max-w-full rounded-xl border border-neutral-300 bg-white px-3 py-3 text-base"
             defaultValue=""
           >
             <option value="">Whole trip (all consignments)</option>
@@ -202,13 +206,13 @@ export default function PodUploadForm({
         <button
           type="submit"
           disabled={pending}
-          className="mt-4 w-full rounded-2xl bg-green-600 px-6 py-5 text-lg font-bold text-white shadow-lg active:scale-[0.99] disabled:opacity-60"
+          className="mt-4 w-full rounded-2xl bg-green-600 px-4 py-5 text-base font-bold text-white shadow-lg active:scale-[0.99] disabled:opacity-60 sm:px-6 sm:text-lg"
         >
           {pending ? "Uploading…" : "Upload POD ✓"}
         </button>
       )}
 
-      <p className="mt-6 text-center text-xs text-neutral-400">
+      <p className="mt-6 text-balance text-center text-xs text-neutral-400">
         JPG / PNG / PDF · max 10 MB · photo goes directly to the transport office
       </p>
     </form>

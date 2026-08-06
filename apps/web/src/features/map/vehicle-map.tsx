@@ -6,7 +6,7 @@ import type { TrailPoint } from "./vehicle-map-inner";
 const VehicleMapInner = dynamic(() => import("./vehicle-map-inner"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[320px] w-full items-center justify-center rounded-xl bg-neutral-100 text-sm text-neutral-400">
+    <div className="flex h-[260px] w-full items-center justify-center rounded-xl bg-neutral-100 text-sm text-neutral-400 sm:h-[320px]">
       Loading map…
     </div>
   ),

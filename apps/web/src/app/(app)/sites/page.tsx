@@ -48,7 +48,7 @@ export default async function SitesPage({
         {homeBases.map((s) => (
           <div key={s.id} className={`rounded-xl border bg-white p-4 shadow-xs ${s.confirmed ? "border-neutral-200" : "border-amber-300 bg-amber-50/40"}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="text-sm">
+              <div className="min-w-0 text-sm">
                 <div className="font-semibold text-neutral-900">
                   {s.name}{" "}
                   {!s.confirmed && (
@@ -69,11 +69,16 @@ export default async function SitesPage({
                   </a>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                 {!s.confirmed && (
-                  <form action={confirmSite} className="flex items-center gap-2">
+                  <form action={confirmSite} className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                     <input type="hidden" name="siteId" value={s.id} />
-                    <input name="name" placeholder="Yard name (e.g. Prithla Stockyard)" required className={inputSmCls} />
+                    <input
+                      name="name"
+                      placeholder="Yard name (e.g. Prithla Stockyard)"
+                      required
+                      className={`w-full sm:w-64 ${inputSmCls}`}
+                    />
                     <button type="submit" className={`${btnSuccess} px-3 py-2 text-sm`}>
                       Confirm
                     </button>
@@ -100,13 +105,13 @@ export default async function SitesPage({
         )}
       </div>
 
-      <div className={`mt-6 p-5 ${cardCls}`}>
+      <div className={`mt-6 p-4 sm:p-5 ${cardCls}`}>
         <h3 className="text-sm font-semibold text-neutral-900">Add home base manually</h3>
         <form action={createSite} className="mt-3 flex flex-wrap items-center gap-2">
-          <input name="name" placeholder="Name" required className={inputSmCls} />
-          <input name="lat" placeholder="Latitude" required className={`w-32 ${inputSmCls}`} />
-          <input name="lng" placeholder="Longitude" required className={`w-32 ${inputSmCls}`} />
-          <input name="radius" placeholder="Radius m (400)" className={`w-32 ${inputSmCls}`} />
+          <input name="name" placeholder="Name" required className={`w-full sm:w-56 ${inputSmCls}`} />
+          <input name="lat" placeholder="Latitude" required className={`w-[calc(50%-0.25rem)] sm:w-32 ${inputSmCls}`} />
+          <input name="lng" placeholder="Longitude" required className={`w-[calc(50%-0.25rem)] sm:w-32 ${inputSmCls}`} />
+          <input name="radius" placeholder="Radius m (400)" className={`w-full sm:w-32 ${inputSmCls}`} />
           <button type="submit" className={btnPrimary}>
             Add site
           </button>

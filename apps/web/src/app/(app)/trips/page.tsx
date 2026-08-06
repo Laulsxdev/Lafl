@@ -6,9 +6,12 @@ import { STATUS_PILL, statusLabel } from "@/features/status";
 import {
   EmptyState,
   PageHeader,
+  TableScroll,
   bannerOk,
   btnPrimary,
   cardCls,
+  colSecondary,
+  colTertiary,
   pillCls,
   tdCls,
   thCls,
@@ -52,7 +55,7 @@ export default async function TripsPage({
   return (
     <div>
       <PageHeader title="Trips" subtitle="Plan, dispatch and track every load.">
-        <Link href="/trips/new" className={btnPrimary}>
+        <Link href="/trips/new" className={`${btnPrimary} tap`}>
           + New Trip
         </Link>
       </PageHeader>
@@ -65,7 +68,7 @@ export default async function TripsPage({
           <Link
             key={t.key}
             href={`/trips?tab=${t.key}`}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+            className={`tap inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-medium ${
               tab === t.key
                 ? "bg-neutral-900 text-white shadow-sm"
                 : "border border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50"
@@ -77,64 +80,68 @@ export default async function TripsPage({
       </div>
 
       <div className={`mt-4 overflow-hidden ${cardCls}`}>
-        <table className="w-full text-sm">
-          <thead className="border-b border-neutral-100 bg-neutral-50/80">
-            <tr>
-              <th className={thCls}>Trip</th>
-              <th className={thCls}>Vehicle</th>
-              <th className={thCls}>Driver</th>
-              <th className={thCls}>Route</th>
-              <th className={thCls}>Status</th>
-              <th className={thCls}>ETA</th>
-              <th className={thCls}>Created</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {(trips ?? []).map((t) => {
-              const driver = (t.trip_drivers ?? []).find(
-                (d) => d.role === "primary" && !d.released_at,
-              )?.drivers?.name;
-              return (
-                <tr key={t.id} className="hover:bg-neutral-50">
-                  <td className={`${tdCls} font-medium text-neutral-900`}>
-                    <Link href={`/trips/${t.id}`} className="block hover:underline">
-                      {t.trip_no}
-                    </Link>
-                  </td>
-                  <td className={tdCls}>{t.vehicles?.reg_no ?? "—"}</td>
-                  <td className={tdCls}>{driver ?? "—"}</td>
-                  <td className={`${tdCls} text-neutral-600`}>
-                    {t.routes ? `${t.routes.origin_city} → ${t.routes.dest_city}` : "—"}
-                  </td>
-                  <td className={tdCls}>
-                    <span
-                      className={`${pillCls} ${STATUS_PILL[t.status] ?? "bg-neutral-100 text-neutral-600"}`}
-                    >
-                      {statusLabel(t.status)}
-                    </span>
-                  </td>
-                  <td className={`${tdCls} text-neutral-600`}>{fmt(t.eta)}</td>
-                  <td className={`${tdCls} text-neutral-400`}>{fmt(t.created_at)}</td>
-                </tr>
-              );
-            })}
-            {(trips ?? []).length === 0 && (
+        <TableScroll>
+          <table className="w-full min-w-[640px] text-sm">
+            <thead className="border-b border-neutral-100 bg-neutral-50/80">
               <tr>
-                <td colSpan={7}>
-                  <EmptyState
-                    icon="truck"
-                    title={tab === "live" ? "No live trips" : "No trips in this view"}
-                    hint={
-                      tab === "live"
-                        ? "Create one with + New Trip to get rolling."
-                        : "Switch tabs to see trips in other stages."
-                    }
-                  />
-                </td>
+                <th className={thCls}>Trip</th>
+                <th className={thCls}>Vehicle</th>
+                <th className={thCls}>Driver</th>
+                <th className={thCls}>Route</th>
+                <th className={thCls}>Status</th>
+                <th className={`${thCls} ${colSecondary}`}>ETA</th>
+                <th className={`${thCls} ${colTertiary}`}>Created</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {(trips ?? []).map((t) => {
+                const driver = (t.trip_drivers ?? []).find(
+                  (d) => d.role === "primary" && !d.released_at,
+                )?.drivers?.name;
+                return (
+                  <tr key={t.id} className="hover:bg-neutral-50">
+                    <td className={`${tdCls} font-medium text-neutral-900`}>
+                      <Link href={`/trips/${t.id}`} className="block hover:underline">
+                        {t.trip_no}
+                      </Link>
+                    </td>
+                    <td className={tdCls}>{t.vehicles?.reg_no ?? "—"}</td>
+                    <td className={tdCls}>{driver ?? "—"}</td>
+                    <td className={`${tdCls} text-neutral-600`}>
+                      {t.routes ? `${t.routes.origin_city} → ${t.routes.dest_city}` : "—"}
+                    </td>
+                    <td className={tdCls}>
+                      <span
+                        className={`${pillCls} ${STATUS_PILL[t.status] ?? "bg-neutral-100 text-neutral-600"}`}
+                      >
+                        {statusLabel(t.status)}
+                      </span>
+                    </td>
+                    <td className={`${tdCls} ${colSecondary} text-neutral-600`}>{fmt(t.eta)}</td>
+                    <td className={`${tdCls} ${colTertiary} text-neutral-400`}>
+                      {fmt(t.created_at)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {(trips ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState
+                      icon="truck"
+                      title={tab === "live" ? "No live trips" : "No trips in this view"}
+                      hint={
+                        tab === "live"
+                          ? "Create one with + New Trip to get rolling."
+                          : "Switch tabs to see trips in other stages."
+                      }
+                    />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </TableScroll>
       </div>
     </div>
   );

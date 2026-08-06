@@ -38,6 +38,28 @@ This is a multi-tenant SaaS. Lauls is tenant #1, not the product.
 5. Trip is the aggregate root — vehicles/EWBs/drivers/money link through `trip_id`. Vehicle↔EWB has no direct link.
 6. Trip has 4 status tracks: operational `status` (state machine in `core/domain/trip-state.ts`), plus parallel `pod_status`, `settlement_status`, `billing_status`.
 7. Every status change must write to `activity_logs`.
+8. UI is mobile-first and must not scroll horizontally at 320px. See "Responsive rules".
+
+## Responsive rules
+
+The portal is used on phones in the field (POD upload, trip checks), so every
+screen must work from 320px up. Tailwind v4 defaults; `lg` (1024px) is the
+shell breakpoint.
+
+- Shell: sidebar is `hidden lg:flex`; below `lg` the drawer in
+  `components/mobile-nav.tsx` takes over. Never render both.
+- Grids start at one column — a bare `grid-cols-N` (N>1) with no breakpoint
+  prefix is a bug. Dense numeric tiles may stay 2-up on a phone.
+- Every `<table>` is wrapped in `<TableScroll>` with a `min-w-[…]` (~110px per
+  column). De-prioritise columns with `colSecondary`/`colTertiary` on both the
+  `th` and its `td` — never the primary identifier or an actions column.
+- Form-control font goes to 16px under `sm` (globals.css) so iOS Safari does
+  not zoom on focus; buttons get a 44px min height there. Don't override.
+- Safe-area insets are applied to `body` in landscape. Per-component insets
+  must be additive — `pb-[max(0.75rem,env(safe-area-inset-bottom))]`, not a
+  bare `env()` class, which would replace Tailwind's padding.
+- Print pages keep their geometry via `print:` variants (`print:grid-cols-2`,
+  `print:flex-row`); `.table-scroll` unclips itself in `@media print`.
 
 ## Key domain invariants (also enforced by DB)
 

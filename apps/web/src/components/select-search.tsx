@@ -70,7 +70,7 @@ export default function SelectSearch({
   };
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative w-full min-w-0">
       <input type="hidden" name={name} value={value} required={required} />
       <button
         type="button"
@@ -79,7 +79,7 @@ export default function SelectSearch({
           open ? "border-neutral-900 ring-1 ring-neutral-900" : "border-neutral-300 hover:border-neutral-400"
         }`}
       >
-        <span className={selected ? "" : "text-neutral-400"}>
+        <span className={`min-w-0 truncate ${selected ? "" : "text-neutral-400"}`}>
           {selected ? (
             <>
               {selected.label}
@@ -97,7 +97,7 @@ export default function SelectSearch({
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg">
+        <div className="absolute left-0 z-30 mt-1.5 w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg">
           <div className="border-b border-neutral-100 p-2">
             <input
               ref={searchRef}
@@ -114,7 +114,7 @@ export default function SelectSearch({
               className="w-full rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
             />
           </div>
-          <ul className="max-h-64 overflow-y-auto py-1">
+          <ul className="max-h-[50vh] overflow-y-auto py-1 sm:max-h-64">
             {allowEmpty && (
               <li>
                 <button
@@ -135,9 +135,11 @@ export default function SelectSearch({
                     o.value === value ? "bg-neutral-50 font-semibold" : ""
                   }`}
                 >
-                  <span className="truncate">{o.label}</span>
+                  <span className="min-w-0 truncate">{o.label}</span>
                   {o.hint && (
-                    <span className="shrink-0 text-xs text-neutral-400">{o.hint}</span>
+                    <span className="max-w-[45%] shrink-0 truncate text-xs text-neutral-400">
+                      {o.hint}
+                    </span>
                   )}
                 </button>
               </li>

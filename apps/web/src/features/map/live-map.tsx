@@ -7,7 +7,7 @@ import type { VehiclePosition } from "./live-map-inner";
 const LiveMapInner = dynamic(() => import("./live-map-inner"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[420px] w-full items-center justify-center rounded-xl bg-neutral-100 text-sm text-neutral-400">
+    <div className="flex h-[320px] w-full items-center justify-center rounded-xl bg-neutral-100 text-sm text-neutral-400 sm:h-[380px] lg:h-[420px]">
       Loading map…
     </div>
   ),

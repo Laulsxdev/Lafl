@@ -77,29 +77,29 @@ export default async function NewTripPage({
       {fetchError && <p className={`mt-4 ${bannerError}`}>{fetchError}</p>}
 
       {/* ── Path A: E-Way Bill first ── */}
-      <div className={`mt-6 p-6 ${cardCls}`}>
+      <div className={`mt-6 p-4 sm:p-6 ${cardCls}`}>
         <h2 className="text-sm font-semibold text-neutral-900">Start with E-Way Bill</h2>
         <p className="mt-0.5 text-xs text-neutral-500">
           Fetches the full record from the E-Way Bill portal — check the consignment, and
           the vehicle comes pre-filled from Part-B.
         </p>
-        <form method="get" className="mt-3 flex gap-2">
+        <form method="get" className="mt-3 flex flex-wrap gap-2">
           <input
             name="ewb"
             defaultValue={ewb ?? ""}
             placeholder="12-digit E-Way Bill number"
             pattern="\d{12}"
             required
-            className={inputCls}
+            className={`${inputCls} min-w-0 flex-1`}
           />
-          <button type="submit" className={btnGhost}>
+          <button type="submit" className={`${btnGhost} shrink-0`}>
             Fetch
           </button>
         </form>
 
         {preview && (
           <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-mono font-semibold">{preview.row.ewb_no}</span>
               <span
                 className={`${pillCls} px-2 py-0.5 text-xs font-semibold ${
@@ -165,7 +165,7 @@ export default async function NewTripPage({
                     hint: `${v.vehicle_type} · ${v.ownership}`,
                   }))}
                 />
-                <button type="submit" className={btnPrimary}>
+                <button type="submit" className={`${btnPrimary} w-full sm:w-auto`}>
                   Create trip with this E-Way Bill →
                 </button>
               </form>
@@ -175,7 +175,7 @@ export default async function NewTripPage({
       </div>
 
       {/* ── Path B: vehicle first (original flow) ── */}
-      <div className={`mt-4 p-6 ${cardCls}`}>
+      <div className={`mt-4 p-4 sm:p-6 ${cardCls}`}>
         <h2 className="text-sm font-semibold text-neutral-900">Start with vehicle</h2>
         <form action={createTrip} className="mt-3 space-y-4">
           <div>
@@ -191,7 +191,7 @@ export default async function NewTripPage({
               }))}
             />
           </div>
-          <button type="submit" className={btnPrimary}>
+          <button type="submit" className={`${btnPrimary} w-full sm:w-auto`}>
             Create draft trip →
           </button>
         </form>

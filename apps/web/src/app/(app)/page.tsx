@@ -179,15 +179,15 @@ export default async function DashboardPage() {
       </PageHeader>
 
       {/* Operations tiles */}
-      <h2 className="mt-8 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+      <h2 className="mt-6 text-xs font-semibold uppercase tracking-wider text-neutral-400 sm:mt-8">
         Operations
       </h2>
-      <div className="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
         {opsTiles.map((t) => {
           const inner = (
             <>
               <div className="text-xs font-medium text-neutral-500">{t.label}</div>
-              <div className="mt-1.5 text-3xl font-semibold tabular-nums tracking-tight text-neutral-900">
+              <div className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 sm:text-3xl">
                 {t.value}
               </div>
             </>
@@ -196,12 +196,12 @@ export default async function DashboardPage() {
             <Link
               key={t.label}
               href={t.href}
-              className={`${cardCls} p-5 hover:border-neutral-300 hover:shadow-sm`}
+              className={`${cardCls} p-4 hover:border-neutral-300 hover:shadow-sm sm:p-5`}
             >
               {inner}
             </Link>
           ) : (
-            <div key={t.label} className={`${cardCls} p-5`}>
+            <div key={t.label} className={`${cardCls} p-4 sm:p-5`}>
               {inner}
             </div>
           );
@@ -210,7 +210,7 @@ export default async function DashboardPage() {
 
       {/* Financials — deliberately distinct from ops tiles */}
       <div className="mt-6 overflow-hidden rounded-xl bg-neutral-900 shadow-sm">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-white/10 px-4 py-3 sm:px-5">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Financials
           </h2>
@@ -221,22 +221,26 @@ export default async function DashboardPage() {
             View invoices →
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-px bg-white/10 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-px bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
           {finTiles.map((t) => {
             const inner = (
               <>
                 <div className="text-xs font-medium text-neutral-400">{t.label}</div>
-                <div className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-white">
+                <div className="mt-1.5 text-xl font-semibold tabular-nums tracking-tight text-white sm:text-2xl">
                   {t.value}
                 </div>
               </>
             );
             return t.href ? (
-              <Link key={t.label} href={t.href} className="bg-neutral-900 p-5 hover:bg-neutral-800">
+              <Link
+                key={t.label}
+                href={t.href}
+                className="bg-neutral-900 p-4 hover:bg-neutral-800 sm:p-5"
+              >
                 {inner}
               </Link>
             ) : (
-              <div key={t.label} className="bg-neutral-900 p-5">
+              <div key={t.label} className="bg-neutral-900 p-4 sm:p-5">
                 {inner}
               </div>
             );
@@ -244,11 +248,11 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
+      <div className="mt-6 grid gap-6 sm:mt-8 xl:grid-cols-3">
+        <div className="min-w-0 xl:col-span-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
             <h2 className="text-sm font-semibold text-neutral-900">Live Fleet Map</h2>
-            <div className="flex items-center gap-3 text-xs text-neutral-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-2 w-2 rounded-full bg-amber-600" />
                 on trip
@@ -267,14 +271,14 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <div className="mb-3 flex items-baseline gap-2">
             <h2 className="text-sm font-semibold text-neutral-900">Alerts</h2>
             <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium tabular-nums text-neutral-500">
               {alerts.length}
             </span>
           </div>
-          <div className="max-h-[420px] space-y-2 overflow-y-auto">
+          <div className="max-h-[360px] space-y-2 overflow-y-auto sm:max-h-[420px]">
             {alerts.map((a, i) => (
               <Link
                 key={i}
@@ -286,7 +290,7 @@ export default async function DashboardPage() {
                 }`}
               >
                 <AlertIcon className="mt-0.5 h-4 w-4" />
-                <span>{a.text}</span>
+                <span className="min-w-0 break-words">{a.text}</span>
               </Link>
             ))}
             {alerts.length === 0 && (
@@ -321,7 +325,7 @@ export default async function DashboardPage() {
                   </span>
                 </span>
                 <span
-                  className={`${pillCls} ${STATUS_PILL[t.status] ?? "bg-neutral-100 text-neutral-600"}`}
+                  className={`${pillCls} shrink-0 ${STATUS_PILL[t.status] ?? "bg-neutral-100 text-neutral-600"}`}
                 >
                   {statusLabel(t.status)}
                 </span>

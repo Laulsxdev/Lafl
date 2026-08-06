@@ -78,7 +78,7 @@ export default async function PodQueuePage({
       <div className="mt-3 space-y-2">
         {(pending ?? []).map((p) => (
           <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-xs">
-            <div>
+            <div className="min-w-0">
               <Link href={`/trips/${p.trip_id}`} className="font-semibold text-neutral-900 hover:underline">
                 {p.trips?.trip_no}
               </Link>
@@ -89,19 +89,28 @@ export default async function PodQueuePage({
                 Open document
               </a>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <ActionForm action={verifyPodAction}>
                 <input type="hidden" name="tripId" value={p.trip_id} />
                 <input type="hidden" name="podId" value={p.id} />
-                <button type="submit" className={`${btnSuccess} px-3 py-1.5 text-xs`}>
+                <button type="submit" className={`${btnSuccess} w-full px-3 py-1.5 text-xs sm:w-auto`}>
                   Verify
                 </button>
               </ActionForm>
-              <ActionForm action={rejectPodAction} resetOnOk className="flex items-center gap-1.5">
+              <ActionForm
+                action={rejectPodAction}
+                resetOnOk
+                className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center"
+              >
                 <input type="hidden" name="tripId" value={p.trip_id} />
                 <input type="hidden" name="podId" value={p.id} />
-                <input name="reason" placeholder="Reject reason" required className={`${inputSmCls} px-2 py-1 text-xs`} />
-                <button type="submit" className={`${btnDanger} px-2.5 py-1 text-xs`}>
+                <input
+                  name="reason"
+                  placeholder="Reject reason"
+                  required
+                  className={`${inputSmCls} w-full min-w-0 px-2 py-1 text-xs sm:w-40`}
+                />
+                <button type="submit" className={`${btnDanger} w-full px-2.5 py-1 text-xs sm:w-auto`}>
                   Reject
                 </button>
               </ActionForm>
@@ -131,7 +140,7 @@ export default async function PodQueuePage({
             key={t.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs"
           >
-            <div>
+            <div className="min-w-0">
               <Link href={`/trips/${t.id}`} className="font-medium text-neutral-900 hover:underline">
                 {t.trip_no} · {t.vehicles?.reg_no}
               </Link>
@@ -139,16 +148,20 @@ export default async function PodQueuePage({
                 {t.status.replace(/_/g, " ")}
               </span>
             </div>
-            <ActionForm action={uploadPodAction} resetOnOk className="flex flex-wrap items-center gap-2">
+            <ActionForm
+              action={uploadPodAction}
+              resetOnOk
+              className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center"
+            >
               <input type="hidden" name="tripId" value={t.id} />
               <input
                 name="file"
                 type="file"
                 required
                 accept="image/jpeg,image/png,image/webp,application/pdf"
-                className="max-w-52 text-xs"
+                className="w-full min-w-0 max-w-full text-xs sm:w-52"
               />
-              <select name="ewbId" className={`${inputSmCls} px-2 py-1 text-xs`}>
+              <select name="ewbId" className={`${inputSmCls} w-full px-2 py-1 text-xs sm:w-auto`}>
                 <option value="">Whole trip</option>
                 {(ewbsByTrip.get(t.id) ?? []).map((e) => (
                   <option key={e.id} value={e.id}>
@@ -156,7 +169,7 @@ export default async function PodQueuePage({
                   </option>
                 ))}
               </select>
-              <button type="submit" className={`${btnGhost} px-3 py-1.5 text-xs`}>
+              <button type="submit" className={`${btnGhost} w-full px-3 py-1.5 text-xs sm:w-auto`}>
                 Upload
               </button>
             </ActionForm>

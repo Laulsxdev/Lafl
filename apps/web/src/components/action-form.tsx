@@ -40,10 +40,14 @@ export default function ActionForm({
     <form ref={ref} action={formAction} className={className}>
       {children}
       {state.error && (
-        <p className="w-full text-xs font-medium text-red-600">{state.error}</p>
+        <p className="w-full basis-full break-words text-xs font-medium text-red-600">
+          {state.error}
+        </p>
       )}
       {state.ok && !state.error && (
-        <p className="w-full text-xs font-medium text-green-700">✓ {state.ok}</p>
+        <p className="w-full basis-full break-words text-xs font-medium text-green-700">
+          ✓ {state.ok}
+        </p>
       )}
     </form>
   );

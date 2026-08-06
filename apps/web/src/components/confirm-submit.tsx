@@ -13,7 +13,7 @@ export default function ConfirmSubmit({
   return (
     <button
       type="submit"
-      className={className}
+      className={`max-w-full ${className ?? ""}`}
       onClick={(e) => {
         if (!window.confirm(message)) e.preventDefault();
       }}

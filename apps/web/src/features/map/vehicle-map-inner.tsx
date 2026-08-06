@@ -86,11 +86,11 @@ export default function VehicleMapInner({
   const moving = (latest.speed_kmh ?? 0) > 3;
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <MapContainer
         center={[lat, lng]}
         zoom={10}
-        style={{ height: 320, width: "100%", borderRadius: 12 }}
+        className="h-[260px] w-full rounded-xl sm:h-[320px]"
         scrollWheelZoom
       >
         <TileLayer
@@ -114,7 +114,7 @@ export default function VehicleMapInner({
         </Marker>
       </MapContainer>
       {vehicleId && (
-        <div className="pointer-events-none absolute right-2.5 top-2.5 z-[1000] rounded-full bg-neutral-900/80 px-3 py-1 text-xs font-medium text-white shadow">
+        <div className="pointer-events-none absolute right-2.5 top-2.5 z-[1000] max-w-[calc(100%-1.25rem)] truncate rounded-full bg-neutral-900/80 px-3 py-1 text-xs font-medium text-white shadow">
           Live · updated {agoLabel(Date.now() - fetchedAt)}
         </div>
       )}

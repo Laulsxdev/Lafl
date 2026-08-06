@@ -8,7 +8,7 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-50 p-6">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-neutral-50 p-4 sm:p-6">
       {/* quiet backdrop: soft top glow + hairline grid */}
       <div
         aria-hidden
@@ -20,7 +20,7 @@ export default async function LoginPage({
       />
 
       <div className="relative w-full max-w-sm">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex items-center gap-3">
             <BrandMark className="h-10 w-10" />
             <div>

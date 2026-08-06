@@ -63,7 +63,7 @@ export default async function InvoicesPage({
             key={inv.id}
             className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white px-4 py-3 text-sm shadow-xs ${inv.due_date && inv.due_date < today ? "border-red-300" : "border-neutral-200"}`}
           >
-            <div>
+            <div className="min-w-0">
               <Link href={`/trips/${inv.trip_id}`} className="font-semibold text-neutral-900 hover:underline">
                 {inv.invoice_no}
               </Link>
@@ -81,16 +81,20 @@ export default async function InvoicesPage({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
+            <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-end">
+              <div className="sm:text-right">
                 <div className="font-semibold tabular-nums text-neutral-900">{formatInr(inv.total - inv.received_amount)}</div>
                 <div className="text-xs tabular-nums text-neutral-400">of {formatInr(inv.total)}</div>
               </div>
-              <ActionForm action={recordReceiptAction} resetOnOk className="flex items-center gap-1.5">
+              <ActionForm
+                action={recordReceiptAction}
+                resetOnOk
+                className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center"
+              >
                 <input type="hidden" name="tripId" value={inv.trip_id} />
                 <input type="hidden" name="invoiceId" value={inv.id} />
-                <input name="amount" type="number" step="0.01" placeholder="₹ received" required className={`w-28 ${inputSmCls}`} />
-                <button type="submit" className={`${btnSuccess} px-3 py-1.5 text-xs`}>
+                <input name="amount" type="number" step="0.01" placeholder="₹ received" required className={`w-full min-w-0 sm:w-28 ${inputSmCls}`} />
+                <button type="submit" className={`${btnSuccess} w-full px-3 py-1.5 text-xs sm:w-auto`}>
                   Receipt
                 </button>
               </ActionForm>
@@ -116,13 +120,13 @@ export default async function InvoicesPage({
           <Link
             key={t.id}
             href={`/trips/${t.id}`}
-            className="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300 hover:bg-neutral-50"
+            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300 hover:bg-neutral-50"
           >
-            <span className="font-medium text-neutral-900">
+            <span className="min-w-0 font-medium text-neutral-900">
               {t.trip_no} · {t.vehicles?.reg_no}
               {t.total_weight_kg ? ` · ${(t.total_weight_kg / 1000).toFixed(3)} MT` : ""}
             </span>
-            <span className="text-neutral-400">raise invoice →</span>
+            <span className="shrink-0 text-neutral-400">raise invoice →</span>
           </Link>
         ))}
         {needInvoice.length === 0 && (

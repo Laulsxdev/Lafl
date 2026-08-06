@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getLiveVehicleSnapshot } from "@/server/services/intangles.service";
 import VehicleMap from "@/features/map/vehicle-map";
 import { STATUS_PILL, statusLabel } from "@/features/status";
-import { EmptyState, cardCls, pillCls, tdCls, thCls } from "@/components/ui";
+import { EmptyState, TableScroll, cardCls, pillCls, tdCls, thCls } from "@/components/ui";
 
 const fmt = (d: string | number | null | undefined) =>
   d
@@ -73,7 +73,9 @@ export default async function VehicleDetailPage({
         <Link href="/vehicles" className="text-sm text-neutral-400 hover:text-neutral-700">
           ← Vehicles
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">{vehicle.reg_no}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
+          {vehicle.reg_no}
+        </h1>
         <span className={`${pillCls} bg-neutral-100 px-3 py-1 text-neutral-700`}>
           {vehicle.vehicle_type} · {vehicle.ownership} · {statusLabel(vehicle.status)}
         </span>
@@ -100,7 +102,7 @@ export default async function VehicleDetailPage({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <h2 className="text-sm font-semibold text-neutral-900">Location & recent trail</h2>
             <span className="text-xs text-neutral-400">
               last fix: {fmt(pos?.ts ?? null)}
@@ -164,43 +166,45 @@ export default async function VehicleDetailPage({
       {/* trip history */}
       <h2 className="mt-10 text-sm font-semibold text-neutral-900">Trip history</h2>
       <div className={`mt-3 overflow-hidden ${cardCls}`}>
-        <table className="w-full text-sm">
-          <thead className="border-b border-neutral-100 bg-neutral-50/80">
-            <tr>
-              <th className={thCls}>Trip</th>
-              <th className={thCls}>Route</th>
-              <th className={thCls}>Status</th>
-              <th className={thCls}>Created</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {(trips ?? []).map((t) => (
-              <tr key={t.id} className="hover:bg-neutral-50">
-                <td className={`${tdCls} font-medium text-neutral-900`}>
-                  <Link href={`/trips/${t.id}`} className="hover:underline">
-                    {t.trip_no}
-                  </Link>
-                </td>
-                <td className={`${tdCls} text-neutral-600`}>
-                  {t.routes ? `${t.routes.origin_city} → ${t.routes.dest_city}` : "—"}
-                </td>
-                <td className={tdCls}>
-                  <span className={`${pillCls} ${STATUS_PILL[t.status] ?? "bg-neutral-100 text-neutral-600"}`}>
-                    {statusLabel(t.status)}
-                  </span>
-                </td>
-                <td className={`${tdCls} text-neutral-400`}>{fmt(t.created_at)}</td>
-              </tr>
-            ))}
-            {(trips ?? []).length === 0 && (
+        <TableScroll>
+          <table className="w-full min-w-[480px] text-sm">
+            <thead className="border-b border-neutral-100 bg-neutral-50/80">
               <tr>
-                <td colSpan={4}>
-                  <EmptyState icon="truck" title="No trips on this truck yet" />
-                </td>
+                <th className={thCls}>Trip</th>
+                <th className={thCls}>Route</th>
+                <th className={thCls}>Status</th>
+                <th className={thCls}>Created</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {(trips ?? []).map((t) => (
+                <tr key={t.id} className="hover:bg-neutral-50">
+                  <td className={`${tdCls} font-medium text-neutral-900`}>
+                    <Link href={`/trips/${t.id}`} className="hover:underline">
+                      {t.trip_no}
+                    </Link>
+                  </td>
+                  <td className={`${tdCls} text-neutral-600`}>
+                    {t.routes ? `${t.routes.origin_city} → ${t.routes.dest_city}` : "—"}
+                  </td>
+                  <td className={tdCls}>
+                    <span className={`${pillCls} ${STATUS_PILL[t.status] ?? "bg-neutral-100 text-neutral-600"}`}>
+                      {statusLabel(t.status)}
+                    </span>
+                  </td>
+                  <td className={`${tdCls} text-neutral-400`}>{fmt(t.created_at)}</td>
+                </tr>
+              ))}
+              {(trips ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={4}>
+                    <EmptyState icon="truck" title="No trips on this truck yet" />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </TableScroll>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { createOrg } from "./actions";
 import {
   EmptyState,
   PageHeader,
+  TableScroll,
   bannerError,
   btnPrimary,
   cardCls,
@@ -36,48 +37,50 @@ export default async function AdminPage({
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className={`overflow-hidden ${cardCls}`}>
-            <table className="w-full text-sm">
-              <thead className="border-b border-neutral-100 bg-neutral-50/80">
-                <tr>
-                  <th className={thCls}>Name</th>
-                  <th className={thCls}>Slug</th>
-                  <th className={thCls}>Status</th>
-                  <th className={thCls}></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100">
-                {(orgs ?? []).map((o) => (
-                  <tr key={o.id} className="hover:bg-neutral-50">
-                    <td className={`${tdCls} font-medium text-neutral-900`}>{o.name}</td>
-                    <td className={`${tdCls} text-neutral-500`}>{o.slug}</td>
-                    <td className={`${tdCls} capitalize`}>{o.status}</td>
-                    <td className={`${tdCls} text-right`}>
-                      <Link
-                        href={`/admin/${o.id}`}
-                        className="font-medium text-neutral-900 underline-offset-2 hover:underline"
-                      >
-                        Manage →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {(orgs ?? []).length === 0 && (
+            <TableScroll>
+              <table className="w-full min-w-[520px] text-sm">
+                <thead className="border-b border-neutral-100 bg-neutral-50/80">
                   <tr>
-                    <td colSpan={4}>
-                      <EmptyState
-                        icon="inbox"
-                        title="No organizations yet"
-                        hint="Create the first one on the right."
-                      />
-                    </td>
+                    <th className={thCls}>Name</th>
+                    <th className={thCls}>Slug</th>
+                    <th className={thCls}>Status</th>
+                    <th className={thCls}></th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {(orgs ?? []).map((o) => (
+                    <tr key={o.id} className="hover:bg-neutral-50">
+                      <td className={`${tdCls} font-medium text-neutral-900`}>{o.name}</td>
+                      <td className={`${tdCls} text-neutral-500`}>{o.slug}</td>
+                      <td className={`${tdCls} capitalize`}>{o.status}</td>
+                      <td className={`${tdCls} text-right`}>
+                        <Link
+                          href={`/admin/${o.id}`}
+                          className="font-medium text-neutral-900 underline-offset-2 hover:underline"
+                        >
+                          Manage →
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                  {(orgs ?? []).length === 0 && (
+                    <tr>
+                      <td colSpan={4}>
+                        <EmptyState
+                          icon="inbox"
+                          title="No organizations yet"
+                          hint="Use the New organization form to create the first one."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </TableScroll>
           </div>
         </div>
 
-        <div className={`h-fit p-5 ${cardCls}`}>
+        <div className={`h-fit p-4 sm:p-5 ${cardCls}`}>
           <h2 className="text-sm font-semibold text-neutral-900">New organization</h2>
           <form action={createOrg} className="mt-4 space-y-3">
             <div>

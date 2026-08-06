@@ -46,9 +46,9 @@ export default async function SettlementsPage() {
         {(open ?? []).map((s) => (
           <div
             key={s.id}
-            className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300"
+            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300"
           >
-            <span className="font-medium text-neutral-900">
+            <span className="min-w-0 font-medium text-neutral-900">
               <Link href={`/trips/${s.trip_id}`} className="hover:underline">
                 {s.trips?.trip_no} · {s.drivers?.name}
               </Link>
@@ -84,10 +84,10 @@ export default async function SettlementsPage() {
           <Link
             key={t.id}
             href={`/trips/${t.id}`}
-            className="flex justify-between rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300 hover:bg-neutral-50"
+            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm shadow-xs hover:border-neutral-300 hover:bg-neutral-50"
           >
-            <span className="font-medium text-neutral-900">{t.trip_no} · {t.vehicles?.reg_no}</span>
-            <span className="text-neutral-400">generate →</span>
+            <span className="min-w-0 font-medium text-neutral-900">{t.trip_no} · {t.vehicles?.reg_no}</span>
+            <span className="shrink-0 text-neutral-400">generate →</span>
           </Link>
         ))}
         {needGeneration.length === 0 && (

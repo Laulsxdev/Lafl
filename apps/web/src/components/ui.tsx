@@ -10,6 +10,10 @@ import type { ReactNode } from "react";
    - Pills       : `pillCls` + tone classes from features/status.ts
    - Page titles : text-2xl font-semibold tracking-tight (via <PageHeader />)
    - Section hdrs: <SectionCard title=…/> inside cards, <SectionHeading/> for lists
+
+   Responsive: mobile-first. Layout grids start at one column and widen at
+   sm/md/lg; every data table is wrapped in <TableScroll> so wide tables scroll
+   sideways instead of stretching the viewport.
 ─────────────────────────────────────────────────────────────────────────────── */
 
 /* Buttons */
@@ -32,8 +36,12 @@ export const labelCls = "mb-1 block text-xs font-medium text-neutral-500";
 /* Containers, tables, pills */
 export const cardCls = "rounded-xl border border-neutral-200 bg-white shadow-xs";
 export const thCls =
-  "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500";
-export const tdCls = "px-4 py-3";
+  "whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 sm:px-4";
+export const tdCls = "px-3 py-3 sm:px-4";
+/* Hide a low-priority column below `sm` — the row stays readable on a phone
+   and the full record is one tap away on the detail page. */
+export const colSecondary = "hidden sm:table-cell";
+export const colTertiary = "hidden md:table-cell";
 export const pillCls =
   "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize";
 
@@ -52,14 +60,29 @@ export function PageHeader({
   children?: ReactNode; // right-aligned actions
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">{title}</h1>
+    <div className="flex flex-wrap items-start justify-between gap-3 sm:items-end">
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
+          {title}
+        </h1>
         {subtitle && <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>}
       </div>
-      {children && <div className="flex items-center gap-2">{children}</div>}
+      {children && (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      )}
     </div>
   );
+}
+
+/* ── Horizontal scroller for wide data tables ────────────────────────────── */
+export function TableScroll({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`table-scroll ${className}`}>{children}</div>;
 }
 
 /* ── Card section with a consistent header bar ───────────────────────────── */
@@ -80,14 +103,14 @@ export function SectionCard({
 }) {
   return (
     <section className={`${cardCls} ${className}`}>
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-neutral-100 px-4 py-3.5 sm:px-6 sm:py-4">
         <h2 className="text-sm font-semibold text-neutral-900">
           {title}
           {meta && <span className="ml-2 text-xs font-normal text-neutral-400">{meta}</span>}
         </h2>
         {aside}
       </header>
-      <div className={flush ? "" : "p-6"}>{children}</div>
+      <div className={flush ? "" : "p-4 sm:p-6"}>{children}</div>
     </section>
   );
 }

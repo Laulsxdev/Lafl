@@ -9,6 +9,7 @@ import {
 } from "../actions";
 import {
   SectionCard,
+  TableScroll,
   bannerError,
   bannerOk,
   btnGhost,
@@ -42,7 +43,9 @@ export default async function OrgAdminPage({
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">{org.name}</h1>
+      <h1 className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
+        {org.name}
+      </h1>
       <p className="mt-1 text-sm text-neutral-500">slug: {org.slug}</p>
       {error && <p className={`mt-4 ${bannerError}`}>{error}</p>}
       {ok && <p className={`mt-4 ${bannerOk}`}>{ok}</p>}
@@ -108,33 +111,35 @@ export default async function OrgAdminPage({
       </SectionCard>
 
       <SectionCard className="mt-6" title="Users">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-100 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              <th className="py-2 font-semibold">Name</th>
-              <th className="py-2 font-semibold">Email</th>
-              <th className="py-2 font-semibold">Role</th>
-              <th className="py-2 font-semibold">Active</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100">
-            {(users ?? []).map((u) => (
-              <tr key={u.id}>
-                <td className="py-2.5 font-medium text-neutral-900">{u.name}</td>
-                <td className="py-2.5">{u.email}</td>
-                <td className="py-2.5 capitalize">{u.role}</td>
-                <td className="py-2.5">{u.active ? "Yes" : "No"}</td>
+        <TableScroll>
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="border-b border-neutral-100 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                <th className="py-2 pr-3 font-semibold">Name</th>
+                <th className="py-2 pr-3 font-semibold">Email</th>
+                <th className="py-2 pr-3 font-semibold">Role</th>
+                <th className="py-2 font-semibold">Active</th>
               </tr>
-            ))}
-            {(users ?? []).length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-4 text-center text-neutral-400">
-                  No users in this organization yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {(users ?? []).map((u) => (
+                <tr key={u.id}>
+                  <td className="py-2.5 pr-3 font-medium text-neutral-900">{u.name}</td>
+                  <td className="py-2.5 pr-3">{u.email}</td>
+                  <td className="py-2.5 pr-3 capitalize">{u.role}</td>
+                  <td className="py-2.5">{u.active ? "Yes" : "No"}</td>
+                </tr>
+              ))}
+              {(users ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-neutral-400">
+                    No users in this organization yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </TableScroll>
 
         <form action={createOrgUser} className="mt-6 grid gap-3 border-t border-neutral-100 pt-5 md:grid-cols-2">
           <input type="hidden" name="orgId" value={orgId} />

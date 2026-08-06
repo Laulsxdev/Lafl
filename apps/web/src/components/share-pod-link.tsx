@@ -33,7 +33,7 @@ export default function SharePodLink({ path, tripNo }: { path: string; tripNo: s
     <button
       type="button"
       onClick={onClick}
-      className="text-xs font-medium text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
+      className="max-w-full whitespace-nowrap text-left text-xs font-medium text-neutral-500 underline underline-offset-2 hover:text-neutral-900"
     >
       {copied ? "Link copied ✓" : "Share POD link ↗"}
     </button>

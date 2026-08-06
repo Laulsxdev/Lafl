@@ -88,11 +88,11 @@ export default function LiveMapInner({ positions: initial }: { positions: Vehicl
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <MapContainer
         center={[27.2, 79.5]}
         zoom={6}
-        style={{ height: 420, width: "100%", borderRadius: 12 }}
+        className="h-[320px] w-full rounded-xl sm:h-[380px] lg:h-[420px]"
         scrollWheelZoom
       >
         <TileLayer
@@ -126,13 +126,13 @@ export default function LiveMapInner({ positions: initial }: { positions: Vehicl
           </Marker>
         ))}
       </MapContainer>
-      <div className="pointer-events-none absolute right-2.5 top-2.5 z-[1000] rounded-full bg-neutral-900/80 px-3 py-1 text-xs font-medium text-white shadow">
+      <div className="pointer-events-none absolute right-2.5 top-2.5 z-[1000] max-w-[calc(100%-1.25rem)] truncate rounded-full bg-neutral-900/80 px-3 py-1 text-xs font-medium text-white shadow">
         {failures.current > 0 ? "reconnecting…" : `Live · updated ${agoLabel(Date.now() - fetchedAt)}`}
       </div>
-      <div className="pointer-events-none absolute bottom-2.5 left-2.5 z-[1000] flex gap-3 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-neutral-700 shadow">
-        <span><span style={{ color: COLOR.available }}>■</span> free</span>
-        <span><span style={{ color: COLOR.on_trip }}>■</span> on trip</span>
-        <span><span style={{ color: COLOR.maintenance }}>■</span> maintenance</span>
+      <div className="pointer-events-none absolute bottom-2.5 left-2.5 z-[1000] flex max-w-[calc(100%-1.25rem)] flex-wrap gap-x-3 gap-y-0.5 rounded-lg bg-white/90 px-2.5 py-1.5 text-xs font-medium text-neutral-700 shadow sm:px-3">
+        <span className="whitespace-nowrap"><span style={{ color: COLOR.available }}>■</span> free</span>
+        <span className="whitespace-nowrap"><span style={{ color: COLOR.on_trip }}>■</span> on trip</span>
+        <span className="whitespace-nowrap"><span style={{ color: COLOR.maintenance }}>■</span> maintenance</span>
       </div>
     </div>
   );
