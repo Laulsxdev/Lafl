@@ -20,12 +20,21 @@ export default function ActionForm({
   resetOnOk?: boolean;
   children: React.ReactNode;
 }) {
-  const [state, formAction] = useActionState(action, {} as ActionResult);
+  const [state, formAction, pending] = useActionState(action, {} as ActionResult);
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.ok && resetOnOk) ref.current?.reset();
   }, [state, resetOnOk]);
+
+  // The global FormPending helper dims the form on submit and used to rely on
+  // navigation to reset it. In-place actions never navigate, so clear it here.
+  useEffect(() => {
+    if (!pending) {
+      ref.current?.removeAttribute("data-pending");
+      document.getElementById("lafl-progress")?.classList.remove("active");
+    }
+  }, [pending]);
 
   return (
     <form ref={ref} action={formAction} className={className}>

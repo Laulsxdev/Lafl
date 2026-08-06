@@ -273,11 +273,20 @@ export async function ensureCharges(
   const db = await createSupabaseServerClient();
   const trip = await getTrip(db, tripId);
 
-  const { count } = await db
+  const { data: existing } = await db
     .from("trip_charges")
-    .select("id", { count: "exact", head: true })
+    .select("id, planned_amount, approved_amount, source")
     .eq("trip_id", tripId);
-  if ((count ?? 0) > 0) return;
+  if ((existing ?? []).length > 0) {
+    // An all-zero manual seed means charges were loaded before a route was
+    // picked (no budget matched). Replace it so choosing the route later
+    // still pulls the real budget. Anything a human touched is left alone.
+    const allZeroManual = (existing ?? []).every(
+      (c) => c.planned_amount === 0 && c.approved_amount === 0 && c.source === "manual",
+    );
+    if (!allZeroManual) return;
+    await db.from("trip_charges").delete().eq("trip_id", tripId);
+  }
 
   const { data: vehicle } = await db
     .from("vehicles")

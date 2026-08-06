@@ -123,16 +123,18 @@ export async function detachEwbAction(_: ActionResult, formData: FormData) {
 export async function savePlan(_: ActionResult, formData: FormData) {
   const profile = await requireOrgStaff();
   const tripId = str(formData, "tripId");
-  return act(
-    () =>
-      trips.updatePlan(profile, tripId, {
-        routeId: opt(formData, "routeId"),
-        plannedStart: dt(formData, "plannedStart"),
-        eta: dt(formData, "eta"),
-        notes: opt(formData, "notes"),
-      }),
-    "Plan saved",
-  );
+  return act(async () => {
+    await trips.updatePlan(profile, tripId, {
+      routeId: opt(formData, "routeId"),
+      plannedStart: dt(formData, "plannedStart"),
+      eta: dt(formData, "eta"),
+      notes: opt(formData, "notes"),
+    });
+    // Route decides the budget — pull charges from the master rate right away
+    // (no-op if a human already edited amounts). Best effort: a missing budget
+    // must not fail the plan save.
+    await trips.ensureCharges(profile, tripId).catch(() => {});
+  }, "Plan saved");
 }
 
 export async function saveCrew(_: ActionResult, formData: FormData) {

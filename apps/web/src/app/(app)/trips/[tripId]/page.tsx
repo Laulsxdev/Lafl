@@ -172,6 +172,17 @@ export default async function TripDetailPage({
 
   const isDraft = trip.status === "draft";
 
+  // Does the chosen route have a budget in the masters? Drives the Money hint.
+  let routeHasBudget: boolean | null = null; // null = no route picked yet
+  if (isDraft && trip.route_id) {
+    const { count: rateCount } = await db
+      .from("master_trip_rates")
+      .select("id", { count: "exact", head: true })
+      .eq("route_id", trip.route_id)
+      .is("effective_to", null);
+    routeHasBudget = (rateCount ?? 0) > 0;
+  }
+
   // Compliance guard: the E-Way Bill's Part-B declares which vehicle carries
   // the load. If the trip runs a different vehicle, checkposts can fine —
   // warn loudly until dispatch, but never block (Part-B is often updated late).
@@ -522,6 +533,19 @@ export default async function TripDetailPage({
           </div>
         }
       >
+        {isDraft && routeHasBudget === null && (
+          <p className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
+            Pick a route in Step 3a first — charges fill in automatically from that
+            route&apos;s budget.
+          </p>
+        )}
+        {isDraft && routeHasBudget === false && (
+          <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            No budget exists in the masters for this route yet — amounts start at ₹0,
+            enter them manually. (Budgets come from the trip-budget sheet; ask the team
+            to add this route.)
+          </p>
+        )}
         {(charges ?? []).length === 0 ? (
           <ActionForm action={loadCharges}>
             <input type="hidden" name="tripId" value={tripId} />
